@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>具身工场智慧农场控制面板</title>
+<style>
+  :root, [data-theme="light"] {
+    --bg-dark: #f6f8fa;
+    --bg-card: #ffffff;
+    --bg-card2: #f0f2f5;
+    --border: #d0d7de;
+    --text-primary: #1f2328;
+    --text-secondary: #656d76;
+    --text-muted: #8b949e;
+    --green: #22863a;
+    --green-bg: rgba(34,134,58,0.08);
+    --red: #cf222e;
+    --red-bg: rgba(207,34,46,0.08);
+    --blue: #0969da;
+    --blue-bg: rgba(9,105,218,0.08);
+    --amber: #9a6700;
+    --amber-bg: rgba(154,103,0,0.08);
+    --cyan: #1a7f37;
+    --purple: #8250df;
+    --teal: #1a7f37;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  [data-theme="dark"] {
+    --bg-dark: #0d1117;
+    --bg-card: #161b22;
+    --bg-card2: #1c2128;
+    --border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #484f58;
+    --green: #3fb950;
+    --green-bg: rgba(63,185,80,0.12);
+    --red: #f85149;
+    --red-bg: rgba(248,81,73,0.12);
+    --blue: #58a6ff;
+    --blue-bg: rgba(88,166,255,0.12);
+    --amber: #d29922;
+    --amber-bg: rgba(210,153,34,0.12);
+    --cyan: #39d353;
+    --purple: #bc8cff;
+    --teal: #39c5bb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ---- Header ---- */
+  .header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: var(--green-bg);
+    border: 1px solid var(--green);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .header-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  .header-sub { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  /* ---- Bluetooth Status ---- */
+  .bt-status {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-card2);
+    font-size: 13px;
+    cursor: default;
+    user-select: none;
+  }
+  .bt-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-muted);
+    transition: background 0.3s;
+  }
+  .bt-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .bt-dot.connecting { background: var(--amber); animation: pulse 1s infinite; }
+  .bt-status-text { color: var(--text-secondary); }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .btn {
+    padding: 7px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-connect {
+    background: var(--green);
+    border-color: var(--green);
+    color: #0d1117;
+  }
+  .btn-connect:hover:not(:disabled) { background: #4fc862; }
+  .btn-disconnect {
+    background: transparent;
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .btn-disconnect:hover:not(:disabled) { background: var(--red-bg); }
+
+  /* ---- Main Layout ---- */
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+  .grid-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .grid-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media(max-width:700px){ .grid-bottom{ grid-template-columns: 1fr; } }
+
+  /* ---- Sensor Card ---- */
+  .sensor-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .sensor-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .sensor-card.temp::before { background: linear-gradient(90deg, #f85149, #d29922); }
+  .sensor-card.humi::before { background: linear-gradient(90deg, #58a6ff, #39c5bb); }
+  .sensor-card.soil::before { background: linear-gradient(90deg, #3fb950, #39c5bb); }
+  .sensor-card.light::before { background: linear-gradient(90deg, #d29922, #bc8cff); }
+  .sensor-card.rain::before { background: linear-gradient(90deg, #58a6ff, #bc8cff); }
+
+  .sensor-icon { font-size: 22px; margin-bottom: 10px; }
+  .sensor-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+  .sensor-value {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+    transition: color 0.3s;
+  }
+  .sensor-value.alert { color: var(--red); }
+  .sensor-unit { font-size: 14px; font-weight: 400; color: var(--text-secondary); margin-left: 2px; }
+  .sensor-status { font-size: 12px; margin-top: 8px; padding: 3px 8px; border-radius: 20px; display: inline-block; }
+  .status-normal { background: var(--green-bg); color: var(--green); }
+  .status-warn { background: var(--amber-bg); color: var(--amber); }
+  .status-alert { background: var(--red-bg); color: var(--red); }
+
+  .sensor-bar-bg {
+    margin-top: 10px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .sensor-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
+  /* ---- Control Card ---- */
+  .control-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-title-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+
+  .device-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .device-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .device-info { display: flex; align-items: center; gap: 12px; }
+  .device-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .device-name { font-size: 14px; font-weight: 500; }
+  .device-state { font-size: 12px; margin-top: 2px; }
+
+  /* Toggle Switch */
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+  .toggle-label { font-size: 12px; color: var(--text-secondary); }
+  .toggle {
+    position: relative;
+    width: 46px; height: 24px;
+    cursor: pointer;
+  }
+  .toggle input { display: none; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 12px;
+    transition: background 0.2s;
+  }
+  .toggle input:checked ~ .toggle-track { background: var(--green); }
+  .toggle-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 18px; height: 18px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .toggle input:checked ~ .toggle-thumb {
+    transform: translateX(22px);
+    background: #fff;
+  }
+  .toggle:has(input:disabled) { opacity: 0.4; cursor: not-allowed; }
+
+  /* 小号 toggle（用于轮询开关） */
+  .toggle-sm {
+    width: 36px; height: 20px;
+  }
+  .toggle-sm .toggle-track {
+    border-radius: 10px;
+  }
+  .toggle-sm .toggle-thumb {
+    width: 14px; height: 14px;
+    top: 3px; left: 3px;
+  }
+  .toggle-sm input:checked ~ .toggle-thumb {
+    transform: translateX(16px);
+  }
+
+  /* ---- Log Panel ---- */
+  .log-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    height: 260px;
+  }
+  .log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .log-body {
+    flex: 1;
+    min-height: 0;   /* 防止内容撑开父容器 */
+    overflow-y: auto;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    padding-right: 4px;
+  }
+  .log-body::-webkit-scrollbar { width: 4px; }
+  .log-body::-webkit-scrollbar-track { background: transparent; }
+  .log-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .log-line { display: flex; gap: 8px; }
+  .log-time { color: var(--text-muted); flex-shrink: 0; }
+  .log-msg.tx { color: var(--blue); }
+  .log-msg.rx { color: var(--green); }
+  .log-msg.sys { color: var(--amber); }
+  .log-msg.err { color: var(--red); }
+
+  .btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text-secondary);
+  }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--text-secondary); color: var(--text-primary); }
+
+  /* ---- Manual Send ---- */
+  .send-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .hex-input {
+    flex: 1;
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: 'SF Mono', monospace;
+    font-size: 13px;
+    padding: 7px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .hex-input:focus { border-color: var(--blue); }
+  .hex-input::placeholder { color: var(--text-muted); }
+  .btn-send {
+    background: var(--blue-bg);
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+  .btn-send:hover:not(:disabled) { background: var(--blue); color: #0d1117; }
+
+  /* ---- Quick CMD Btns ---- */
+  .quick-cmds {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-top: 12px;
+  }
+  .btn-cmd {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-cmd:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
+  .btn-cmd:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ---- Refresh btn ---- */
+  .btn-refresh {
+    background: var(--bg-card2);
+    border-color: var(--border);
+    color: var(--text-secondary);
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-refresh:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+  .btn-refresh:disabled { opacity: 0.3; cursor: not-allowed; }
+  .spin { display: inline-block; }
+  .spin.spinning { animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- Signal bar ---- */
+  .signal { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
+  .signal-bar { width: 3px; background: var(--text-muted); border-radius: 1px; }
+  .signal-bar.active { background: var(--green); }
+  .signal-bar:nth-child(1) { height: 4px; }
+  .signal-bar:nth-child(2) { height: 7px; }
+  .signal-bar:nth-child(3) { height: 10px; }
+  .signal-bar:nth-child(4) { height: 14px; }
+
+  /* ---- Toast ---- */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    border: 1px solid;
+    animation: slideIn 0.2s ease;
+    max-width: 280px;
+  }
+  .toast.success { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+  .toast.error { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+  .toast.info { background: var(--blue-bg); border-color: var(--blue); color: var(--blue); }
+  @keyframes slideIn { from{ transform:translateX(30px);opacity:0 } to{ transform:translateX(0);opacity:1 } }
+
+  /* ---- Last update ---- */
+  .last-update { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+  /* ---- Overlay when disconnected ---- */
+  .disconnected-overlay {
+    position: fixed; inset: 0;
+    background: rgba(13,17,23,0.75);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 50;
+    backdrop-filter: blur(2px);
+  }
+  .overlay-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px 40px;
+    text-align: center;
+    max-width: 360px;
+  }
+  .overlay-icon { font-size: 48px; margin-bottom: 16px; }
+  .overlay-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .overlay-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+  .overlay-steps { text-align: left; margin-bottom: 24px; }
+  .overlay-step { font-size: 13px; color: var(--text-secondary); padding: 4px 0; display: flex; gap: 10px; }
+  .step-num { color: var(--blue); font-weight: 600; flex-shrink: 0; }
+  .btn-big {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: var(--radius);
+  }
+
+  /* ---- Lang toggle ---- */
+  .btn-lang {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 30px;
+  }
+  .btn-lang:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* ---- Theme toggle ---- */
+  .btn-theme {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 14px;
+    padding: 3px 7px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 30px;
+    line-height: 1.4;
+  }
+  .btn-theme:hover { border-color: var(--amber); color: var(--amber); }
+
+  /* ---- Threshold Panel ---- */
+  .threshold-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+  }
+  .threshold-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px;
+    cursor: pointer; user-select: none;
+    font-size: 14px; font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .threshold-header:hover { background: var(--bg-card2); }
+  .th-panel.open .threshold-header { border-bottom-color: var(--border); }
+  .th-arrow {
+    font-size: 11px; color: var(--text-secondary);
+    transition: transform 0.2s;
+  }
+  .th-panel.open .th-arrow { transform: rotate(-180deg); }
+  .th-count {
+    margin-left: auto; font-size: 12px; font-weight: 400;
+    color: var(--text-muted);
+  }
+  .th-count.loaded { color: var(--green); }
+  .th-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .th-panel.open .th-body { max-height: 700px; }
+  .th-grid {
+    display: flex; flex-direction: column;
+    padding: 10px 16px;
+  }
+  .th-group {
+    display: flex; flex-wrap: wrap; align-items: center;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 6px;
+  }
+  .th-group:last-child { border-bottom: none; }
+  .th-icon {
+    font-size: 14px; width: 22px; text-align: center;
+  }
+  .th-label {
+    font-size: 12px; color: var(--text-primary);
+    font-weight: 600; min-width: 52px;
+  }
+  .th-rows {
+    display: flex; gap: 12px; flex-wrap: wrap; flex: 1;
+  }
+  .th-row {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px;
+  }
+  .th-row-name {
+    color: var(--text-secondary);
+    min-width: 28px; text-align: right;
+  }
+  .btn-adj {
+    width: 24px; height: 24px; padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-card2);
+    color: var(--text-primary);
+    font-size: 15px; font-weight: 700;
+    line-height: 1;
+    cursor: pointer; transition: all 0.12s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .btn-adj:hover:not(:disabled) {
+    border-color: var(--blue); color: var(--blue);
+  }
+  .btn-adj:disabled { opacity: 0.25; cursor: not-allowed; }
+  .th-val {
+    font-size: 13px; font-weight: 600;
+    color: var(--text-primary);
+    min-width: 44px; text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.2s;
+  }
+  .th-val.unread {
+    color: var(--text-muted); font-weight: 400;
+    font-size: 11px; font-style: italic;
+  }
+  .th-val.out-of-range { color: var(--red); }
+  .th-unit {
+    font-size: 11px; color: var(--text-muted);
+    min-width: 16px;
+  }
+  .th-actions {
+    display: flex; gap: 8px;
+    padding: 0 16px 14px;
+    justify-content: flex-end;
+  }
+  .btn-reset {
+    padding: 5px 14px; font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-reset:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+  .btn-reset:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo-icon">🌱</div>
+    <div>
+      <div class="header-title">具身工场智慧农场控制面板</div>
+      <div class="header-sub">Embodied-ai-factory Smart Farm Dashboard · BLE via DX-BT24</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn-theme" id="btnTheme" onclick="toggleTheme()" title="切换主题">☀️</button>
+    <button class="btn-lang" id="btnLang" onclick="toggleLang()" title="Switch Language">EN</button>
+    <div class="signal" id="signalBar">
+      <div class="signal-bar"></div>
+      <div class="signal-bar"></div>
+      <div class="signal-bar"></div>
+      <div class="signal-bar"></div>
+    </div>
+    <div class="bt-status">
+      <div class="bt-dot" id="btDot"></div>
+      <span class="bt-status-text" id="btStatusText">未连接</span>
+    </div>
+    <button class="btn btn-connect" id="btnConnect" onclick="connectBluetooth()">连接蓝牙</button>
+    <button class="btn btn-disconnect" id="btnDisconnect" onclick="disconnectBluetooth()" style="display:none">断开连接</button>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="main">
+  <!-- Sensor cards -->
+  <div class="section-label">传感器数据</div>
+  <div class="grid-top">
+    <!-- 温度 -->
+    <div class="sensor-card temp" id="card-temp">
+      <div class="sensor-icon">🌡️</div>
+      <div class="sensor-label">温度</div>
+      <div class="sensor-value" id="val-temp">--<span class="sensor-unit">°C</span></div>
+      <span class="sensor-status" id="stat-temp">等待数据</span>
+      <div class="sensor-bar-bg"><div class="sensor-bar" id="bar-temp" style="width:0%;background:#f85149"></div></div>
+    </div>
+    <!-- 湿度 -->
+    <div class="sensor-card humi">
+      <div class="sensor-icon">💧</div>
+      <div class="sensor-label">空气湿度</div>
+      <div class="sensor-value" id="val-humi">--<span class="sensor-unit">%</span></div>
+      <span class="sensor-status" id="stat-humi">等待数据</span>
+      <div class="sensor-bar-bg"><div class="sensor-bar" id="bar-humi" style="width:0%;background:#58a6ff"></div></div>
+    </div>
+    <!-- 土壤 -->
+    <div class="sensor-card soil">
+      <div class="sensor-icon">🪴</div>
+      <div class="sensor-label">土壤湿度</div>
+      <div class="sensor-value" id="val-soil">--<span class="sensor-unit">%</span></div>
+      <span class="sensor-status" id="stat-soil">等待数据</span>
+      <div class="sensor-bar-bg"><div class="sensor-bar" id="bar-soil" style="width:0%;background:#3fb950"></div></div>
+    </div>
+    <!-- 光照 -->
+    <div class="sensor-card light">
+      <div class="sensor-icon">☀️</div>
+      <div class="sensor-label">光照强度</div>
+      <div class="sensor-value" id="val-light">--<span class="sensor-unit">lux</span></div>
+      <span class="sensor-status" id="stat-light">等待数据</span>
+      <div class="sensor-bar-bg"><div class="sensor-bar" id="bar-light" style="width:0%;background:#d29922"></div></div>
+    </div>
+    <!-- 雨水 -->
+    <div class="sensor-card rain">
+      <div class="sensor-icon">🌧️</div>
+      <div class="sensor-label">雨水检测</div>
+      <div class="sensor-value" id="val-rain" style="font-size:22px;padding-top:6px">--</div>
+      <span class="sensor-status" id="stat-rain">等待数据</span>
+      <div class="sensor-bar-bg"><div class="sensor-bar" id="bar-rain" style="width:0%;background:#58a6ff"></div></div>
+    </div>
+  </div>
+
+  <!-- Threshold Panel -->
+  <div class="threshold-panel th-panel open" id="thresholdPanel" style="display:none">
+    <div class="threshold-header" onclick="toggleThreshold()">
+      <span class="th-arrow" id="thArrow">▾</span>
+      ⚙️ <span id="thTitle">阈值设置</span>
+      <span class="th-count" id="thCount">未读取</span>
+    </div>
+    <div class="th-body" id="thBody">
+      <div class="th-grid" id="thGrid"></div>
+      <div class="th-actions">
+        <button class="btn-reset" id="btnResetTh" disabled>恢复默认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom grid -->
+  <div class="grid-bottom">
+
+    <!-- Control Panel -->
+    <div class="control-card">
+      <div class="card-title">
+        <div class="card-title-dot" style="background:var(--green)"></div>
+        设备控制
+      </div>
+
+      <!-- LED -->
+      <div class="device-row">
+        <div class="device-info">
+          <div class="device-icon" style="background:var(--amber-bg)">💡</div>
+          <div>
+            <div class="device-name">LED 灯</div>
+            <div class="device-state" id="led-state-text" style="color:var(--text-muted)">等待连接...</div>
+          </div>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-label" id="led-label">关</span>
+          <label class="toggle">
+            <input type="checkbox" id="ledToggle" onchange="toggleLED(this)" disabled>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Pump -->
+      <div class="device-row">
+        <div class="device-info">
+          <div class="device-icon" style="background:var(--blue-bg)">🚿</div>
+          <div>
+            <div class="device-name">水泵</div>
+            <div class="device-state" id="pump-state-text" style="color:var(--text-muted)">等待连接...</div>
+          </div>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-label" id="pump-label">关</span>
+          <label class="toggle">
+            <input type="checkbox" id="pumpToggle" onchange="togglePump(this)" disabled>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Refresh / Auto Poll -->
+      <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:nowrap">
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <label class="toggle toggle-sm">
+            <input type="checkbox" id="autoPollToggle" onchange="toggleAutoPoll(this)" checked>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span id="autoPollLabel" style="font-size:11px;white-space:nowrap;color:var(--green)">自动刷新 (3s)</span>
+        </div>
+        <button class="btn-refresh" id="btnRefresh" onclick="readSensorData()" disabled>
+          <span class="spin" id="refreshSpin">↻</span>
+          <span id="btnRefreshText">手动刷新</span>
+        </button>
+      </div>
+      <div class="last-update" id="lastUpdate">上次更新：—</div>
+
+      <!-- Quick CMD -->
+      <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">快捷指令</div>
+        <div class="quick-cmds">
+          <button class="btn-cmd" id="cmd01" onclick="sendHex('01')" disabled>0x01 LED开</button>
+          <button class="btn-cmd" id="cmd02" onclick="sendHex('02')" disabled>0x02 LED关</button>
+          <button class="btn-cmd" id="cmd03" onclick="sendHex('03')" disabled>0x03 泵开</button>
+          <button class="btn-cmd" id="cmd04" onclick="sendHex('04')" disabled>0x04 泵关</button>
+          <span style="display:inline-flex;gap:8px;white-space:nowrap">
+            <button class="btn-cmd" id="cmd05" onclick="sendHex('05')" disabled>0x05 读传感器</button>
+            <button class="btn-cmd" id="cmd06" onclick="sendHex('06')" disabled><span id="cmd06Text">0x06 读阈值</span></button>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log panel -->
+    <div class="log-card">
+      <div class="log-header">
+        <div class="card-title" style="margin-bottom:0">
+          <div class="card-title-dot" style="background:var(--blue)"></div>
+          通信日志
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost btn-sm" onclick="clearLog()">清空</button>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);cursor:pointer">
+            <input type="checkbox" id="autoScrollCheck" checked style="cursor:pointer">
+            <span id="autoScrollText">自动滚动</span>
+          </label>
+        </div>
+      </div>
+      <div class="log-body" id="logBody"></div>
+      <!-- Manual send -->
+      <div class="send-row">
+        <input class="hex-input" id="hexInput" type="text" placeholder="输入十六进制指令，如 05 或 0x05" maxlength="30"
+               onkeydown="if(event.key==='Enter')manualSend()">
+        <button class="btn btn-send btn-sm" id="btnSend" onclick="manualSend()" disabled>发送</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Disconnected overlay -->
+<div class="disconnected-overlay" id="overlay">
+  <div class="overlay-box">
+    <div class="overlay-icon">📡</div>
+    <div class="overlay-title">连接具身工场智慧农场</div>
+    <div class="overlay-desc">通过 BLE 蓝牙连接 STM32 控制板，实时查看传感器数据并控制设备</div>
+    <div class="overlay-steps">
+      <div class="overlay-step"><span class="step-num">1</span><span>确保 STM32 已上电，DX-BT24 蓝牙模块指示灯闪烁</span></div>
+      <div class="overlay-step"><span class="step-num">2</span><span>使用 Chrome 或 Edge 浏览器（需支持 Web Bluetooth）</span></div>
+      <div class="overlay-step"><span class="step-num">3</span><span>点击下方按钮，在弹出列表中选择 BT24 设备</span></div>
+    </div>
+    <button class="btn btn-connect btn-big" onclick="connectBluetooth()">🔗 开始连接蓝牙</button>
+  </div>
+</div>
+
+<script>
+// =============================================
+// BLE 配置 (DX-BT24)
+// =============================================
+const BLE_SERVICE_UUID      = 0xFFE0;
+const BLE_CHAR_UUID         = 0xFFE1;
+const DEVICE_NAME_PREFIX    = 'BT24';
+
+// =============================================
+// 状态
+// =============================================
+let btDevice = null;
+let btChar   = null;
+let isConnected = false;
+let ledState  = false;
+let pumpState = false;
+let rxBuffer  = '';
+let pollTimer = null;            // 自动轮询定时器
+const POLL_INTERVAL = 3000;      // 3 秒自动刷新传感器
+
+// GATT 发送队列：解决并发 writeValue 导致的 "already in progress" 错误
+let sendQueue  = [];
+let isSending  = false;
+
+// =============================================
+// 阈值数据与配置（须在 applyLanguage/buildThresholdUI 之前声明）
+// =============================================
+const DEFAULT_THRESHOLDS = {
+  tmin: 15.0, tmax: 30.0,
+  hmin: 20.0, hmax: 70.0,
+  smin: 20,   smax: 80,
+  lmin: 30,   lmax: 800,
+  rmax: 80
+};
+
+// 阈值配置：id / 分组标签 / 类型 / 单位 / 步长 / 小数位 / 加减指令
+const TH_CONFIG = [
+  { id:'tmin', grp:'thresholdTemp',     type:'min', unit:'thresholdUnitC', step:0.1, dec:1, cmdP:'10', cmdM:'11' },
+  { id:'tmax', grp:'thresholdTemp',     type:'max', unit:'thresholdUnitC', step:0.1, dec:1, cmdP:'12', cmdM:'13' },
+  { id:'hmin', grp:'thresholdHumidity', type:'min', unit:'thresholdUnitP', step:1,   dec:1, cmdP:'14', cmdM:'15' },
+  { id:'hmax', grp:'thresholdHumidity', type:'max', unit:'thresholdUnitP', step:1,   dec:1, cmdP:'16', cmdM:'17' },
+  { id:'smin', grp:'thresholdSoil',     type:'min', unit:'thresholdUnitP', step:1,   dec:0, cmdP:'18', cmdM:'19' },
+  { id:'smax', grp:'thresholdSoil',     type:'max', unit:'thresholdUnitP', step:1,   dec:0, cmdP:'1A', cmdM:'1B' },
+  { id:'lmin', grp:'thresholdLight',    type:'min', unit:'thresholdUnitL', step:1,   dec:0, cmdP:'1C', cmdM:'1D' },
+  { id:'lmax', grp:'thresholdLight',    type:'max', unit:'thresholdUnitL', step:1,   dec:0, cmdP:'1E', cmdM:'1F' },
+  { id:'rmax', grp:'thresholdRain',     type:'max', unit:null,              step:1,   dec:0, cmdP:'20', cmdM:'21' },
+];
+
+let thresholds = {};        // 当前阈值: { tmin:15.0, tmax:30.0, ... }
+let thresholdsLoaded = false;
+
+// =============================================
+// 国际化 (i18n)
+// =============================================
+let currentLang = localStorage.getItem('smartFarmLang') || 'zh';
+
+// =============================================
+// 主题 (Theme)
+// =============================================
+let currentTheme = localStorage.getItem('smartFarmTheme') || 'light';
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  const btn = document.getElementById('btnTheme');
+  if (btn) {
+    btn.textContent = currentTheme === 'dark' ? '🌙' : '☀️';
+    btn.title = currentTheme === 'dark' ? '深色模式' : '浅色模式';
+  }
+}
+
+function toggleTheme() {
+  currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+  localStorage.setItem('smartFarmTheme', currentTheme);
+  applyTheme();
+}
+
+const I18N = {
+  zh: {
+    title: '具身工场智慧农场控制面板',
+    subtitle: 'Embodied-ai-factory Smart Farm Dashboard · BLE via DX-BT24',
+    connecting: '连接中...',
+    connected: '已连接',
+    disconnected: '未连接',
+    btnConnect: '连接蓝牙',
+    btnDisconnect: '断开连接',
+    sectionSensor: '传感器数据',
+    labelTemp: '温度',
+    labelHumi: '空气湿度',
+    labelSoil: '土壤湿度',
+    labelLight: '光照强度',
+    labelRain: '雨水检测',
+    waitingData: '等待数据',
+    sectionControl: '设备控制',
+    labelLED: 'LED 灯',
+    labelPump: '水泵',
+    stateOn: '开',
+    stateOff: '关',
+    waitConnect: '等待连接...',
+    ledRunning: '当前：亮灯中',
+    ledStopped: '当前：已关闭',
+    pumpRunning: '当前：运行中',
+    pumpStopped: '当前：已停止',
+    autoPolling: '自动刷新 (3s)',
+    autoPollStopped: '自动刷新已关闭',
+    btnRefresh: '手动刷新',
+    sectionQuick: '快捷指令',
+    cmdReadTh: '0x06 读阈值',
+    sectionLog: '通信日志',
+    btnClear: '清空',
+    autoScroll: '自动滚动',
+    btnSend: '发送',
+    hexPlaceholder: '输入十六进制指令，如 05 或 0x05',
+    lastUpdate: '上次更新：',
+    lastUpdateNone: '上次更新：—',
+    // 传感器状态
+    tempNormal: '温度正常',  tempLow: '温度偏低',  tempHigh: '温度过高',
+    humiNormal: '湿度适宜',  humiLow: '湿度过低',  humiHigh: '湿度偏高',
+    soilNormal: '土壤适宜',  soilDry: '土壤干旱',  soilWet: '水分过多',
+    lightNormal: '光照正常', lightLow: '光照偏弱', lightHigh: '光照强烈',
+    rainYes: '检测到雨水',   rainNo: '无雨',
+    raining: '正在下雨',      sunny: '天气晴好',
+    // STM32 反馈
+    ledAutoOff: '光照充足，已自动关闭',
+    ledAutoOn: '光照不足，已自动开灯',
+    pumpAutoOff: '土壤湿度充足，已自动停止',
+    pumpAutoOn: '土壤干旱，已自动开启水泵',
+    // Overlay
+    overlayTitle: '连接具身工场智慧农场',
+    overlayDesc: '通过 BLE 蓝牙连接 STM32 控制板，实时查看传感器数据并控制设备',
+    overlayStep1: '确保 STM32 已上电，DX-BT24 蓝牙模块指示灯闪烁',
+    overlayStep2: '使用 Chrome 或 Edge 浏览器（需支持 Web Bluetooth）',
+    overlayStep3: '点击下方按钮，在弹出列表中选择 BT24 设备',
+    overlayBtn: '🔗 开始连接蓝牙',
+    // Toast
+    toastConnectOk: '蓝牙连接成功！',
+    toastDisconnected: '蓝牙已断开连接',
+    toastLedOn: 'LED 已开启',
+    toastLedOff: '光照充足，LED 已自动关闭',
+    toastLedAutoOn: '光照不足，已自动开灯',
+    toastLedAutoOff: '光照充足，已自动关灯',
+    toastPumpOn: '水泵已启动',
+    toastPumpOff: '土壤湿度充足，水泵已自动停止',
+    toastPumpAutoOn: '土壤干旱，已自动开启水泵',
+    toastPumpAutoOff: '土壤湿度充足，已自动停止水泵',
+    toastConnectFirst: '请先连接蓝牙',
+    toastSendFail: '发送失败：',
+    toastBrowserErr: '当前浏览器不支持 Web Bluetooth API，请使用 Chrome 或 Edge',
+    toastUseChrome: '请使用 Chrome 或 Edge 浏览器',
+    toastWarn: '⚠ ',
+    // Log
+    logReady: '具身工场智慧农场控制面板已就绪，等待蓝牙连接...',
+    logBrowser: '浏览器：',
+    logSearching: '正在搜索 BT24 蓝牙设备...',
+    logFound: '已找到设备：',
+    logConnectFail: '连接失败：',
+    logUserCancel: '用户取消了设备选择',
+    logConnected: '已连接 → ',
+    logDisconnected: '蓝牙已断开',
+    logPollOn: '自动刷新已开启（间隔 ',
+    logPollOff: '自动刷新已停止',
+    logSeconds: ' 秒）',
+    logSend: '发送 → ',
+    logSendFail: '发送失败：',
+    logCustom: '自定义指令',
+    logRecoverJson: '已从粘连数据中恢复有效 JSON',
+    logReadThresholds: '正在读取阈值...',
+    logThresholdsOk: '阈值已读取',
+    // Threshold panel
+    sectionThreshold: '阈值设置',
+    thresholdTemp: '温度',
+    thresholdHumidity: '湿度',
+    thresholdSoil: '土壤湿度',
+    thresholdLight: '光照强度',
+    thresholdRain: '降雨量',
+    thresholdMin: '最低',
+    thresholdMax: '最高',
+    thresholdUnitC: '°C',
+    thresholdUnitP: '%',
+    thresholdUnitL: 'lx',
+    thresholdBtnReset: '恢复默认',
+    thresholdUnread: '未读取',
+    thresholdLoaded: '已加载',
+  },
+  en: {
+    title: 'Embodied-ai-factory Smart Farm Dashboard',
+    subtitle: 'Embodied-ai-factory Smart Farm Dashboard · BLE via DX-BT24',
+    connecting: 'Connecting...',
+    connected: 'Connected',
+    disconnected: 'Disconnected',
+    btnConnect: 'Connect BLE',
+    btnDisconnect: 'Disconnect',
+    sectionSensor: 'Sensor Data',
+    labelTemp: 'Temperature',
+    labelHumi: 'Humidity',
+    labelSoil: 'Soil Moisture',
+    labelLight: 'Light',
+    labelRain: 'Rain',
+    waitingData: 'Waiting...',
+    sectionControl: 'Device Control',
+    labelLED: 'LED Light',
+    labelPump: 'Water Pump',
+    stateOn: 'ON',
+    stateOff: 'OFF',
+    waitConnect: 'Waiting for connection...',
+    ledRunning: 'Status: ON',
+    ledStopped: 'Status: OFF',
+    pumpRunning: 'Status: Running',
+    pumpStopped: 'Status: Stopped',
+    autoPolling: 'Auto-refresh (3s)',
+    autoPollStopped: 'Auto-refresh off',
+    btnRefresh: 'Refresh',
+    sectionQuick: 'Quick Commands',
+    cmdReadTh: '0x06 Read Thld',
+    sectionLog: 'Communication Log',
+    btnClear: 'Clear',
+    autoScroll: 'Auto-scroll',
+    btnSend: 'Send',
+    hexPlaceholder: 'Enter hex commands, e.g. 05 or 0x05',
+    lastUpdate: 'Last update: ',
+    lastUpdateNone: 'Last update: —',
+    tempNormal: 'Normal',  tempLow: 'Low',  tempHigh: 'High',
+    humiNormal: 'Normal',  humiLow: 'Too Dry',  humiHigh: 'Too Humid',
+    soilNormal: 'Optimal', soilDry: 'Too Dry',  soilWet: 'Too Wet',
+    lightNormal: 'Normal', lightLow: 'Dim', lightHigh: 'Bright',
+    rainYes: 'Rain Detected', rainNo: 'No Rain',
+    raining: 'Raining', sunny: 'Clear',
+    ledAutoOff: 'Light sufficient, auto-off',
+    ledAutoOn: 'Light insufficient, auto-on',
+    pumpAutoOff: 'Soil moisture OK, auto-stop',
+    pumpAutoOn: 'Soil dry, auto-start',
+    overlayTitle: 'Connect Embodied-ai-factory Smart Farm',
+    overlayDesc: 'Connect to STM32 control board via BLE to view real-time sensor data and control devices',
+    overlayStep1: 'Ensure STM32 is powered on, DX-BT24 BLE module LED is blinking',
+    overlayStep2: 'Use Chrome or Edge browser (Web Bluetooth API required)',
+    overlayStep3: 'Click the button below and select BT24 from the device list',
+    overlayBtn: '🔗 Connect via Bluetooth',
+    toastConnectOk: 'BLE connected!',
+    toastDisconnected: 'BLE disconnected',
+    toastLedOn: 'LED turned ON',
+    toastLedOff: 'Light sufficient, LED auto-off',
+    toastLedAutoOn: 'Light insufficient, LED auto-on',
+    toastLedAutoOff: 'Light sufficient, LED auto-off',
+    toastPumpOn: 'Pump started',
+    toastPumpOff: 'Soil moisture OK, pump auto-stop',
+    toastPumpAutoOn: 'Soil dry, pump auto-start',
+    toastPumpAutoOff: 'Soil moisture OK, pump auto-stop',
+    toastConnectFirst: 'Please connect BLE first',
+    toastSendFail: 'Send failed: ',
+    toastBrowserErr: 'Web Bluetooth API not supported. Please use Chrome or Edge.',
+    toastUseChrome: 'Please use Chrome or Edge browser',
+    toastWarn: '⚠ ',
+    logReady: 'Embodied-ai-factory Smart Farm Dashboard ready, waiting for BLE connection...',
+    logBrowser: 'Browser: ',
+    logSearching: 'Searching for BT24 BLE device...',
+    logFound: 'Found device: ',
+    logConnectFail: 'Connection failed: ',
+    logUserCancel: 'User cancelled device selection',
+    logConnected: 'Connected → ',
+    logDisconnected: 'BLE disconnected',
+    logPollOn: 'Auto-refresh started (every ',
+    logPollOff: 'Auto-refresh stopped',
+    logSeconds: 's)',
+    logSend: 'Send → ',
+    logSendFail: 'Send failed: ',
+    logCustom: 'Custom',
+    logRecoverJson: 'Recovered valid JSON from corrupted buffer',
+    logReadThresholds: 'Reading thresholds...',
+    logThresholdsOk: 'Thresholds loaded',
+    // Threshold panel
+    sectionThreshold: 'Thresholds',
+    thresholdTemp: 'Temperature',
+    thresholdHumidity: 'Humidity',
+    thresholdSoil: 'Soil Moisture',
+    thresholdLight: 'Light',
+    thresholdRain: 'Rain',
+    thresholdMin: 'Min',
+    thresholdMax: 'Max',
+    thresholdUnitC: '°C',
+    thresholdUnitP: '%',
+    thresholdUnitL: 'lx',
+    thresholdBtnReset: 'Reset Defaults',
+    thresholdUnread: 'Not loaded',
+    thresholdLoaded: 'Loaded',
+  }
+};
+
+function t(key) {
+  return I18N[currentLang][key] || key;
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('smartFarmLang', currentLang);
+  document.getElementById('btnLang').textContent = currentLang === 'zh' ? 'EN' : '中';
+  applyLanguage();
+}
+
+function applyLanguage() {
+  const L = I18N[currentLang];
+  // Header
+  document.querySelector('.header-title').textContent = L.title;
+  document.querySelector('.header-sub').textContent = L.subtitle;
+  document.getElementById('btnConnect').textContent = L.btnConnect;
+  document.getElementById('btnDisconnect').textContent = L.btnDisconnect;
+  // Sensor section label
+  document.querySelector('.section-label').textContent = L.sectionSensor;
+  // Sensor labels
+  document.querySelector('.sensor-card.temp .sensor-label').textContent = L.labelTemp;
+  document.querySelectorAll('.sensor-card')[1].querySelector('.sensor-label').textContent = L.labelHumi;
+  document.querySelector('.sensor-card.soil .sensor-label').textContent = L.labelSoil;
+  document.querySelector('.sensor-card.light .sensor-label').textContent = L.labelLight;
+  document.querySelector('.sensor-card.rain .sensor-label').textContent = L.labelRain;
+  // Status placeholders
+  ['stat-temp','stat-humi','stat-soil','stat-light','stat-rain'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.textContent === I18N.zh.waitingData || el.textContent === I18N.en.waitingData) {
+      el.textContent = L.waitingData;
+    }
+  });
+  // Control panel
+  document.querySelector('.control-card .card-title').childNodes[1] && (() => {
+    const titleEl = document.querySelector('.control-card .card-title');
+    // Keep the dot, replace text
+    titleEl.childNodes.forEach(n => { if (n.nodeType === 3) n.textContent = ' ' + L.sectionControl; });
+  })();
+  document.querySelector('.control-card .device-row:first-child .device-name').textContent = L.labelLED;
+  document.querySelector('.control-card .device-row:last-child .device-name').textContent = L.labelPump;
+  // LED/Pump labels
+  document.getElementById('led-label').textContent = ledState ? L.stateOn : L.stateOff;
+  document.getElementById('pump-label').textContent = pumpState ? L.stateOn : L.stateOff;
+  // LED/Pump state text (only if not showing a reason)
+  const ledTxt = document.getElementById('led-state-text');
+  if (ledTxt.textContent === I18N.zh.waitConnect || ledTxt.textContent === I18N.en.waitConnect) ledTxt.textContent = L.waitConnect;
+  else if (ledTxt.textContent === I18N.zh.ledRunning || ledTxt.textContent === I18N.en.ledRunning) ledTxt.textContent = L.ledRunning;
+  else if (ledTxt.textContent === I18N.zh.ledStopped || ledTxt.textContent === I18N.en.ledStopped) ledTxt.textContent = L.ledStopped;
+  const pumpTxt = document.getElementById('pump-state-text');
+  if (pumpTxt.textContent === I18N.zh.waitConnect || pumpTxt.textContent === I18N.en.waitConnect) pumpTxt.textContent = L.waitConnect;
+  else if (pumpTxt.textContent === I18N.zh.pumpRunning || pumpTxt.textContent === I18N.en.pumpRunning) pumpTxt.textContent = L.pumpRunning;
+  else if (pumpTxt.textContent === I18N.zh.pumpStopped || pumpTxt.textContent === I18N.en.pumpStopped) pumpTxt.textContent = L.pumpStopped;
+  // Auto poll label
+  updatePollLabel(pollTimer !== null);
+  // Refresh button
+  const btnRefreshText = document.getElementById('btnRefreshText');
+  if (btnRefreshText) btnRefreshText.textContent = L.btnRefresh;
+  // Quick commands title
+  const quickTitle = document.querySelector('.control-card div[style*="border-top"] div:first-child');
+  if (quickTitle) quickTitle.textContent = L.sectionQuick;
+  // cmd06 text
+  const cmd06Text = document.getElementById('cmd06Text');
+  if (cmd06Text) cmd06Text.textContent = L.cmdReadTh;
+  // Log section
+  document.querySelector('.log-card .card-title').childNodes.forEach(n => { if (n.nodeType === 3) n.textContent = ' ' + L.sectionLog; });
+  document.querySelector('.log-card .btn-ghost').textContent = L.btnClear;
+  const autoScrollText = document.getElementById('autoScrollText');
+  if (autoScrollText) autoScrollText.textContent = L.autoScroll;
+  document.getElementById('btnSend').textContent = L.btnSend;
+  document.getElementById('hexInput').placeholder = L.hexPlaceholder;
+  // Overlay
+  document.querySelector('.overlay-title').textContent = L.overlayTitle;
+  document.querySelector('.overlay-desc').textContent = L.overlayDesc;
+  document.querySelectorAll('.overlay-step .step-num + span').forEach((span, i) => {
+    if (i === 0) span.textContent = L.overlayStep1;
+    if (i === 1) span.textContent = L.overlayStep2;
+    if (i === 2) span.textContent = L.overlayStep3;
+  });
+  document.querySelector('.overlay-box .btn-big').textContent = L.overlayBtn;
+  // Last update
+  const lu = document.getElementById('lastUpdate');
+  if (lu.textContent.startsWith(I18N.zh.lastUpdateNone) || lu.textContent.startsWith(I18N.en.lastUpdateNone)) {
+    lu.textContent = L.lastUpdateNone;
+  } else if (lu.textContent.startsWith(I18N.zh.lastUpdate) || lu.textContent.startsWith(I18N.en.lastUpdate)) {
+    const time = lu.textContent.split('：').pop() || lu.textContent.split(': ').pop();
+    lu.textContent = L.lastUpdate + (time || '');
+  }
+  // BT status
+  if (isConnected) {
+    document.getElementById('btStatusText').textContent = btDevice ? btDevice.name : L.connected;
+  }
+  // CMD button names (update via cmdName)
+  // 阈值面板标题刷新
+  document.getElementById('thTitle').textContent = L.sectionThreshold;
+  document.getElementById('thCount').textContent = thresholdsLoaded ? L.thresholdLoaded : L.thresholdUnread;
+  document.getElementById('btnResetTh').textContent = L.thresholdBtnReset;
+  // 重建阈值面板 DOM（t() 会根据 currentLang 自动输出正确语言）
+  buildThresholdUI();
+  // 如果已加载阈值数据，重新填入数值
+  if (thresholdsLoaded) {
+    for (const c of TH_CONFIG) {
+      const val = thresholds[c.id];
+      if (val !== undefined) {
+        const el = document.getElementById('thv-' + c.id);
+        if (el) {
+          el.textContent = val.toFixed(c.dec);
+          el.classList.remove('unread');
+        }
+      }
+    }
+    enableThresholdControls(true);
+  }
+}
+
+// 初始化语言
+document.getElementById('btnLang').textContent = currentLang === 'zh' ? 'EN' : '中';
+applyLanguage();
+buildThresholdUI();  // 初始构建阈值面板 DOM
+
+// 初始化主题
+applyTheme();
+
+// =============================================
+// 连接蓝牙
+// =============================================
+async function connectBluetooth() {
+  if (!navigator.bluetooth) {
+    toast(t('toastBrowserErr'), 'error');
+    return;
+  }
+  try {
+    setBtStatus('connecting');
+    log('sys', t('logSearching'));
+
+    // 修复：filters 数组里每项是独立条件，不能同一项混用 name + services
+    // 正确做法：namePrefix 单独一项，optionalServices 声明服务权限
+    btDevice = await navigator.bluetooth.requestDevice({
+      filters: [
+        { namePrefix: DEVICE_NAME_PREFIX }
+      ],
+      optionalServices: [BLE_SERVICE_UUID]
+    });
+
+    btDevice.addEventListener('gattserverdisconnected', onDisconnected);
+    log('sys', t('logFound') + btDevice.name);
+
+    const server  = await btDevice.gatt.connect();
+    const service = await server.getPrimaryService(BLE_SERVICE_UUID);
+    btChar        = await service.getCharacteristic(BLE_CHAR_UUID);
+
+    // 开启通知 (接收 STM32 数据)
+    await btChar.startNotifications();
+    btChar.addEventListener('characteristicvaluechanged', onDataReceived);
+
+    onConnected();
+  } catch (err) {
+    setBtStatus('disconnected');
+    if (err.name !== 'NotFoundError') {
+      log('err', t('logConnectFail') + err.message);
+      toast(t('toastSendFail') + err.message, 'error');
+    } else {
+      log('sys', t('logUserCancel'));
+    }
+  }
+}
+
+// =============================================
+// 断开蓝牙
+// =============================================
+function disconnectBluetooth() {
+  if (btDevice && btDevice.gatt.connected) {
+    btDevice.gatt.disconnect();
+  }
+}
+
+function onConnected() {
+  isConnected = true;
+  setBtStatus('connected');
+  document.getElementById('overlay').style.display = 'none';
+  enableControls(true);
+  log('sys', t('logConnected') + btDevice.name);
+  toast(t('toastConnectOk'), 'success');
+  // 连接后自动读取一次传感器 + 开启自动轮询 + 读取阈值
+  setTimeout(() => readSensorData(), 800);
+  setTimeout(() => readThresholds(), 1400);
+  startAutoPoll();
+}
+
+function onDisconnected() {
+  isConnected = false;
+  btChar = null;
+  stopAutoPoll();
+  sendQueue = [];   // 清空发送队列
+  isSending = false;
+  setBtStatus('disconnected');
+  enableControls(false);
+  document.getElementById('overlay').style.display = 'flex';
+  log('sys', t('logDisconnected'));
+  toast(t('toastDisconnected'), 'error');
+}
+
+// =============================================
+// 接收数据 (STM32 → 网页)
+// 带花括号配对切分，解决 BLE 分包 / 粘包
+// =============================================
+function onDataReceived(event) {
+  rxBuffer += new TextDecoder('utf-8').decode(event.target.value);
+  drainRxBuffer();
+}
+
+// 核心：用花括号配对 + 换行拆分，从缓冲区中吃尽所有完整消息
+function drainRxBuffer() {
+  while (rxBuffer.length > 0) {
+    // 跳过前导空白
+    if (/^\s/.test(rxBuffer)) { rxBuffer = rxBuffer.replace(/^\s+/, ''); continue; }
+
+    // 1. 换行拆分——遇到 \n 就切出一行独立处理
+    const nl = rxBuffer.indexOf('\n');
+    if (nl >= 0) {
+      const line = rxBuffer.substring(0, nl);
+      rxBuffer = rxBuffer.substring(nl + 1);
+      if (line.trim()) parseAndLog(line.trim());
+      continue;
+    }
+
+    // 2. 匹配已知文本指令（LED_ON / LED_OFF / PUMP_ON / PUMP_OFF）
+    const bufU = rxBuffer.toUpperCase();
+    const known = ['LED_OFF','LED_ON','PUMP_OFF','PUMP_ON'];
+    let matched = false;
+    for (const cmd of known) {
+      const idx = bufU.indexOf(cmd);
+      if (idx >= 0) {
+        const before = rxBuffer.substring(0, idx);
+        rxBuffer = rxBuffer.substring(idx + cmd.length);
+        if (before.trim()) parseAndLog(before.trim());
+        parseAndLog(cmd);
+        matched = true;
+        break;
+      }
+    }
+    if (matched) continue;
+
+    // 3. JSON 花括号配对提取（解决 BLE 分包 + 多 JSON 粘连）
+    if (rxBuffer.startsWith('{')) {
+      const end = findJsonEnd(rxBuffer);
+      if (end < 0) break; // JSON 不完整，等待更多数据
+      const json = rxBuffer.substring(0, end + 1);
+      rxBuffer = rxBuffer.substring(end + 1);
+      parseAndLog(json);
+      continue;
+    }
+
+    // 什么都处理不了 → 等待下一个 BLE 包
+    break;
+  }
+}
+
+// 花括号配对——返回完整 JSON 的结尾下标，未闭合返回 -1
+function findJsonEnd(str) {
+  let depth = 0, inStr = false, esc = false;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (esc) { esc = false; continue; }
+    if (ch === '\\') { esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (ch === '{') depth++;
+    else if (ch === '}') { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+
+// ---- 从粘连/损坏的 buffer 中恢复内嵌的有效 JSON ----
+// 场景：BLE 分包导致两个 JSON 粘一起，第一个被截断吞掉了第二个的 {
+//   {"type":"warning","reason":"li{"temp":26.5,...}
+function tryRecoverJSON(raw) {
+  // 收集所有 { 的位置（无论是否在字符串内——因为在粘连场景里
+  // 第二个 JSON 的 { 刚好处于上一个 JSON 未闭合的字符串值中）
+  let inStr = false, esc = false;
+  const positions = [0];
+  for (let i = 1; i < raw.length; i++) {
+    const ch = raw[i];
+    if (esc) { esc = false; continue; }
+    if (ch === '\\') { esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (ch === '{') positions.push(i);
+  }
+
+  // 从后往前尝试（最内层的 JSON 更有可能是完整有效的）
+  for (let p = positions.length - 1; p >= 0; p--) {
+    const sub = raw.substring(positions[p]);
+    const end = findJsonEnd(sub);
+    if (end < 0) continue;
+    try {
+      const candidate = sub.substring(0, end + 1);
+      JSON.parse(candidate);   // 仅验证
+      return candidate;
+    } catch (ee) { /* 继续试下一个 */ }
+  }
+  return null;
+}
+
+function parseAndLog(raw) {
+  log('rx', raw);
+  parseResponse(raw);
+}
+
+// =============================================
+// 解析 JSON 响应
+// =============================================
+function parseResponse(raw) {
+  // ---- 优先处理 STM32 智能反馈指令（纯文本） ----
+  const cmd = raw.trim().toUpperCase();
+  const feedbackMap = {
+    'LED_ON':  () => { syncLED(true);  toast(t('toastLedOn'), 'success'); },
+    'LED_OFF': () => { syncLED(false, t('ledAutoOff')); toast(t('toastLedOff'), 'info'); },
+    'PUMP_ON':  () => { syncPump(true);  toast(t('toastPumpOn'), 'success'); },
+    'PUMP_OFF': () => { syncPump(false, t('pumpAutoOff')); toast(t('toastPumpOff'), 'info'); },
+  };
+  if (feedbackMap[cmd]) {
+    feedbackMap[cmd]();
+    updateLastTime();
+    return;
+  }
+
+  // ---- JSON 传感器数据 / 警告 ----
+  try {
+    const data = JSON.parse(raw);
+
+    // 先处理 type=warning 的警告消息
+    if (data.type === 'warning') {
+      handleWarning(data.reason || '');
+      return;
+    }
+
+    // 检测阈值 JSON（含 tmin/tmax/hmin 等字段）
+    if (data.tmin !== undefined || data.tmax !== undefined ||
+        data.hmin !== undefined || data.hmax !== undefined) {
+      parseThresholdData(data);
+      if (Object.keys(data).length <= 9) return; // 纯阈值数据，跳过传感器处理
+    }
+
+    // 修复：兼容 STM32 侧字段名可能有前后空格
+    // 把 keys 都 trim 一遍，构建干净的对象
+    const d = {};
+    for (const key of Object.keys(data)) {
+      d[key.trim()] = data[key];
+    }
+
+    // 温度：支持 temp / temperature
+    const tempVal = d.temp;
+    if (tempVal !== undefined) updateSensor('temp', tempVal, '°C', tempStatus);
+
+    // 湿度：支持 hum / humi / humidity
+    const humVal = d.hum ?? d.humi ?? d.humidity;
+    if (humVal !== undefined) updateSensor('humi', humVal, '%', humiStatus);
+
+    // 土壤：支持 soil / moisture / soil_moisture
+    const soilVal = d.soil ?? d.moisture ?? d.soil_moisture;
+    if (soilVal !== undefined) updateSensor('soil', soilVal, '%', soilStatus);
+
+    // 光照：支持 light / lux / brightness
+    const lightVal = d.light ?? d.lux ?? d.brightness;
+    if (lightVal !== undefined) updateSensor('light', lightVal, 'lux', lightStatus);
+
+    // 雨水：支持 rain / isRain / raining
+    const rainVal = d.rain ?? d.isRain ?? d.raining;
+    if (rainVal !== undefined) updateRain(rainVal);
+
+    // 设备状态：支持 led / LED / pump / PUMP
+    // 只在状态真正变化时才更新，避免覆盖 STM32 自动控制反馈的原因文本
+    const ledVal  = d.led  ?? d.LED;
+    const pumpVal = d.pump ?? d.PUMP;
+    if (ledVal !== undefined) {
+      const newLed = ledVal == 1 || ledVal === true || ledVal === 'on';
+      if (newLed !== ledState) syncLED(newLed);
+    }
+    if (pumpVal !== undefined) {
+      const newPump = pumpVal == 1 || pumpVal === true || pumpVal === 'on';
+      if (newPump !== pumpState) syncPump(newPump);
+    }
+
+    updateLastTime();
+  } catch (e) {
+    // JSON 解析失败 → 尝试从粘连的 buffer 中恢复内嵌的有效 JSON
+    // BLE 分包场景 eg. {"type":"warning","reason":"li{"temp":26.5,...}
+    const recovered = tryRecoverJSON(raw);
+    if (recovered) {
+      log('sys', t('logRecoverJson'));
+      parseResponse(recovered);
+    }
+  }
+}
+
+// =============================================
+// 传感器更新
+// =============================================
+function updateSensor(id, val, unit, statusFn) {
+  const numVal = parseFloat(val);
+  const el = document.getElementById('val-' + id);
+  el.innerHTML = numVal.toFixed(id === 'light' ? 0 : 1) + `<span class="sensor-unit">${unit}</span>`;
+
+  const { cls, text, pct } = statusFn(numVal);
+  const stat = document.getElementById('stat-' + id);
+  stat.className = 'sensor-status ' + cls;
+  stat.textContent = text;
+  document.getElementById('bar-' + id).style.width = Math.min(pct, 100) + '%';
+
+  // 检查是否超出阈值范围
+  checkThresholdCrossings(id, numVal);
+}
+
+function updateRain(val) {
+  const isRaining = val == 1 || val === true || val === 'on' || val === '有雨';
+  const el = document.getElementById('val-rain');
+  el.innerHTML = isRaining ? t('rainYes') : t('rainNo');
+  el.style.fontSize = '18px';
+  const stat = document.getElementById('stat-rain');
+  stat.className = 'sensor-status ' + (isRaining ? 'status-warn' : 'status-normal');
+  stat.textContent = isRaining ? t('raining') : t('sunny');
+  document.getElementById('bar-rain').style.width = isRaining ? '100%' : '0%';
+
+  // 雨水阈值超限检查
+  const numVal = parseInt(val);
+  if (!isNaN(numVal)) checkThresholdCrossings('rain', numVal);
+}
+
+// =============================================
+// 警告消息处理（光照低自动开灯 / 土壤干自动开水泵等）
+// =============================================
+function handleWarning(reason) {
+  const r = (reason || '').toLowerCase();
+
+  if (r.includes('light_low') || r.includes('lightlow') || r.includes('光照')) {
+    syncLED(true);
+    toast(t('toastLedAutoOn'), 'info');
+  } else if (r.includes('light_sufficient') || r.includes('lightok') || r.includes('光足')) {
+    syncLED(false, t('ledAutoOff'));
+    toast(t('toastLedAutoOff'), 'info');
+  } else if (r.includes('soil_dry') || r.includes('soildry') || r.includes('土干')) {
+    syncPump(true);
+    toast(t('toastPumpAutoOn'), 'info');
+  } else if (r.includes('soil_wet') || r.includes('soilwet') || r.includes('土湿')) {
+    syncPump(false, t('pumpAutoOff'));
+    toast(t('toastPumpAutoOff'), 'info');
+  } else {
+    toast(t('toastWarn') + (reason || 'Warning'), 'info');
+  }
+  updateLastTime();
+}
+
+// 状态评级函数
+function tempStatus(v)  {
+  if (v < 10) return { cls:'status-warn',  text: t('tempLow'),  pct: v/50*100 };
+  if (v > 35) return { cls:'status-alert', text: t('tempHigh'), pct: v/50*100 };
+  return { cls:'status-normal', text: t('tempNormal'), pct: v/50*100 };
+}
+function humiStatus(v)  {
+  if (v < 30) return { cls:'status-alert', text: t('humiLow'),  pct: v };
+  if (v > 85) return { cls:'status-warn',  text: t('humiHigh'), pct: v };
+  return { cls:'status-normal', text: t('humiNormal'), pct: v };
+}
+function soilStatus(v)  {
+  if (v < 20) return { cls:'status-alert', text: t('soilDry'),  pct: v };
+  if (v > 80) return { cls:'status-warn',  text: t('soilWet'),  pct: v };
+  return { cls:'status-normal', text: t('soilNormal'), pct: v };
+}
+function lightStatus(v) {
+  const pct = Math.min(v / 1000 * 100, 100);
+  if (v < 100)  return { cls:'status-warn',  text: t('lightLow'),  pct };
+  if (v > 800)  return { cls:'status-warn',  text: t('lightHigh'), pct };
+  return { cls:'status-normal', text: t('lightNormal'), pct };
+}
+
+// =============================================
+// 发送指令（带队列，避免 GATT already in progress）
+// =============================================
+function sendHex(hexStr) {
+  if (!btChar || !isConnected) { toast('请先连接蓝牙', 'error'); return; }
+  const clean = hexStr.replace(/^0x/i, '').replace(/\s/g, '');
+  if (!clean) return;
+
+  // 去重：如果队列里已经有同一指令，跳过（避免自动轮询重复堆积 05）
+  if (sendQueue.includes(clean)) return;
+
+  sendQueue.push(clean);
+  processSendQueue();
+}
+
+async function processSendQueue() {
+  if (isSending || sendQueue.length === 0) return;
+  isSending = true;
+
+  while (sendQueue.length > 0) {
+    const hex = sendQueue.shift();
+    try {
+      const bytes = new Uint8Array(
+        hex.match(/.{1,2}/g).map(b => parseInt(b, 16))
+      );
+      await btChar.writeValue(bytes);
+      log('tx', t('logSend') + `0x${hex.toUpperCase()} (${cmdName(hex)})`);
+    } catch (err) {
+      log('err', t('logSendFail') + err.message);
+      // 连接断开会清空队列，不再弹 toast 骚扰
+      if (isConnected) {
+        toast(t('toastSendFail') + err.message, 'error');
+      }
+    }
+  }
+
+  isSending = false;
+}
+
+function cmdName(hex) {
+  const h = hex.toUpperCase();
+  // 阈值指令
+  for (const c of TH_CONFIG) {
+    if (h === c.cmdP.toUpperCase()) return (currentLang==='zh'?'阈值+':'Thr+') + ' ' + c.id;
+    if (h === c.cmdM.toUpperCase()) return (currentLang==='zh'?'阈值−':'Thr−') + ' ' + c.id;
+  }
+  if (currentLang === 'zh') {
+    const map = { '01':'LED开','02':'LED关','03':'水泵开','04':'水泵关','05':'读传感器','06':'读阈值' };
+    return map[h] || '自定义指令';
+  }
+  const map = { '01':'LED ON','02':'LED OFF','03':'Pump ON','04':'Pump OFF','05':'Read Sensors','06':'Read Thresholds' };
+  return map[h] || 'Custom CMD';
+}
+
+async function readSensorData() {
+  if (!isConnected) { toast(t('toastConnectFirst'), 'error'); return; }
+  const spin = document.getElementById('refreshSpin');
+  const btn  = document.getElementById('btnRefresh');
+  spin.classList.add('spinning');
+  btn.disabled = true;
+  await sendHex('05');
+  setTimeout(() => { spin.classList.remove('spinning'); btn.disabled = !isConnected; }, 1200);
+}
+
+// =============================================
+// 阈值读取与设置（0x06 读 / 0x10-0x21 调）
+
+// 页面加载时构建阈值 UI（只调用一次）
+function buildThresholdUI() {
+  const grid = document.getElementById('thGrid');
+  // 按 sensor 分组
+  const seen = new Set();
+  const groups = [];
+  for (const c of TH_CONFIG) {
+    if (!seen.has(c.grp)) {
+      groups.push({ key: c.grp, rows: [c] });
+      seen.add(c.grp);
+    } else {
+      groups[groups.length-1].rows.push(c);
+    }
+  }
+  // 传感器→图标映射
+  const icons = {
+    thresholdTemp:     '🌡️',
+    thresholdHumidity: '💧',
+    thresholdSoil:     '🪴',
+    thresholdLight:    '☀️',
+    thresholdRain:     '🌧️',
+  };
+
+  grid.innerHTML = groups.map(g => {
+    const icon = icons[g.key] || '⚙️';
+    return `<div class="th-group">
+      <span class="th-icon">${icon}</span>
+      <span class="th-label" id="th-label-${g.key}">${t(g.key)}</span>
+      <div class="th-rows">${g.rows.map(r => `
+        <div class="th-row" id="th-row-${r.id}">
+          <span class="th-row-name" id="th-rn-${r.id}">${t(r.type==='min'?'thresholdMin':'thresholdMax')}</span>
+          <button class="btn-adj" id="adjM-${r.id}" onclick="adjustThreshold('${r.id}',-1)" disabled>−</button>
+          <span class="th-val unread" id="thv-${r.id}">--</span>
+          <button class="btn-adj" id="adjP-${r.id}" onclick="adjustThreshold('${r.id}',1)" disabled>+</button>
+          ${r.unit ? `<span class="th-unit" id="th-unit-${r.id}">${t(r.unit)}</span>` : ''}
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// 发送 0x06 读取 STM32 当前阈值
+async function readThresholds() {
+  if (!isConnected || !btChar) return;
+  log('sys', t('logReadThresholds'));
+  await sendHex('06');
+}
+
+// 解析阈值 JSON 并更新 UI
+function parseThresholdData(data) {
+  // 先重建 DOM 结构（处理语言切换后元素被重建的情况）
+  buildThresholdUI();
+
+  let loaded = false;
+  for (const c of TH_CONFIG) {
+    const val = data[c.id];
+    if (val !== undefined) {
+      thresholds[c.id] = val;
+      const el = document.getElementById('thv-' + c.id);
+      if (el) {
+        el.textContent = val.toFixed(c.dec);
+        el.classList.remove('unread');
+      }
+      loaded = true;
+    }
+  }
+  if (loaded && !thresholdsLoaded) {
+    thresholdsLoaded = true;
+    enableThresholdControls(true);
+    document.getElementById('thCount').textContent = t('thresholdLoaded');
+    document.getElementById('thCount').classList.add('loaded');
+    document.getElementById('btnResetTh').disabled = false;
+    document.getElementById('thresholdPanel').style.display = '';
+    log('sys', t('logThresholdsOk'));
+  }
+}
+
+// 阈值 +/- 按钮 → 发送对应 hex 指令
+async function adjustThreshold(id, dir) {
+  if (!isConnected) { toast(t('toastConnectFirst'), 'error'); return; }
+  const cfg = TH_CONFIG.find(c => c.id === id);
+  if (!cfg) return;
+  const hex = dir > 0 ? cfg.cmdP : cfg.cmdM;
+  await sendHex(hex);
+  // 预估本地值变化（STM32 会通过 JSON 回报确认值）
+  const cur = thresholds[id];
+  if (cur !== undefined) {
+    const newVal = +(cur + dir * cfg.step).toFixed(cfg.dec + 1);
+    thresholds[id] = newVal;
+    const el = document.getElementById('thv-' + id);
+    if (el) el.textContent = newVal.toFixed(cfg.dec);
+  }
+}
+
+// 阈值面板折叠/展开
+function toggleThreshold() {
+  document.getElementById('thresholdPanel').classList.toggle('open');
+}
+
+// 恢复默认阈值
+async function resetThresholds() {
+  if (!isConnected) return;
+  // 逐个写入默认值
+  for (const c of TH_CONFIG) {
+    const defVal = DEFAULT_THRESHOLDS[c.id];
+    const curVal = thresholds[c.id];
+    if (defVal !== undefined && curVal !== undefined) {
+      const delta = defVal - curVal;
+      if (delta === 0) continue;
+      const steps = Math.round(Math.abs(delta) / c.step);
+      const dir = delta > 0 ? 1 : -1;
+      for (let i = 0; i < steps; i++) {
+        const hex = dir > 0 ? c.cmdP : c.cmdM;
+        await sendHex(hex);
+        // tiny delay between commands
+        await new Promise(r => setTimeout(r, 50));
+      }
+    }
+  }
+  // 重新读取确认
+  setTimeout(() => readThresholds(), 600);
+  toast('已发送恢复默认阈值指令', 'info');
+}
+
+// 启用/禁用阈值按钮
+function enableThresholdControls(on) {
+  for (const c of TH_CONFIG) {
+    const mp = document.getElementById('adjP-' + c.id);
+    const mm = document.getElementById('adjM-' + c.id);
+    if (mp) mp.disabled = !on;
+    if (mm) mm.disabled = !on;
+  }
+  if (!on) document.getElementById('btnResetTh').disabled = true;
+}
+
+// 当传感器数据更新时，检查是否超出阈值范围，高亮对应行和传感器数值
+function checkThresholdCrossings(sensorId, val) {
+  if (!thresholdsLoaded) return;
+
+  // 各传感器对应的阈值配置 key
+  const sensorThresholdKeys = {
+    temp:  ['tmin','tmax'],
+    humi:  ['hmin','hmax'],
+    soil:  ['smin','smax'],
+    light: ['lmin','lmax'],
+    rain:  ['rmax']
+  };
+  const relatedIds = sensorThresholdKeys[sensorId] || [];
+
+  // 清除当前传感器关联的阈值面板红色标记
+  for (const id of relatedIds) {
+    const el = document.getElementById('thv-' + id);
+    if (el) el.classList.remove('out-of-range');
+  }
+
+  // 清除当前传感器数值的红色警告
+  const valEl = document.getElementById('val-' + sensorId);
+  if (valEl) valEl.classList.remove('alert');
+
+  // 判断是否超出阈值
+  let crossingKey = null;
+  switch (sensorId) {
+    case 'temp': crossingKey = val < thresholds.tmin ? 'tmin' : val > thresholds.tmax ? 'tmax' : null; break;
+    case 'humi': crossingKey = val < thresholds.hmin ? 'hmin' : val > thresholds.hmax ? 'hmax' : null; break;
+    case 'soil': crossingKey = val < thresholds.smin ? 'smin' : val > thresholds.smax ? 'smax' : null; break;
+    case 'light':crossingKey = val < thresholds.lmin ? 'lmin' : val > thresholds.lmax ? 'lmax' : null; break;
+    case 'rain': crossingKey = val > 0 && val > thresholds.rmax ? 'rmax' : null; break;
+  }
+
+  // 超标 → 红色标记
+  if (crossingKey) {
+    const el = document.getElementById('thv-' + crossingKey);
+    if (el) el.classList.add('out-of-range');
+    if (valEl) valEl.classList.add('alert');
+  }
+}
+
+// =============================================
+// 自动轮询传感器（每 3 秒发送 0x05）
+// =============================================
+function startAutoPoll() {
+  stopAutoPoll();  // 先清掉旧的
+  document.getElementById('autoPollToggle').checked = true;
+  updatePollLabel(true);
+  pollTimer = setInterval(() => {
+    if (isConnected && btChar) {
+      sendHex('05');
+    }
+  }, POLL_INTERVAL);
+  log('sys', t('logPollOn') + (POLL_INTERVAL / 1000) + t('logSeconds'));
+}
+
+function stopAutoPoll() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+    updatePollLabel(false);
+    log('sys', t('logPollOff'));
+  }
+}
+
+function toggleAutoPoll(el) {
+  if (el.checked) {
+    startAutoPoll();
+  } else {
+    stopAutoPoll();
+  }
+}
+
+function updatePollLabel(active) {
+  const el = document.getElementById('autoPollLabel');
+  if (active) {
+    el.textContent = t('autoPolling');
+    el.style.color = 'var(--green)';
+  } else {
+    el.textContent = t('autoPollStopped');
+    el.style.color = 'var(--text-muted)';
+  }
+}
+
+// =============================================
+// 设备开关
+// =============================================
+async function toggleLED(el) {
+  if (!isConnected) { el.checked = ledState; return; }
+  await sendHex(el.checked ? '01' : '02');
+  syncLED(el.checked);
+}
+
+async function togglePump(el) {
+  if (!isConnected) { el.checked = pumpState; return; }
+  await sendHex(el.checked ? '03' : '04');
+  syncPump(el.checked);
+}
+
+function syncLED(state, reason) {
+  ledState = state;
+  const el = document.getElementById('ledToggle');
+  el.checked = state;
+  document.getElementById('led-label').textContent = state ? t('stateOn') : t('stateOff');
+  const txt = document.getElementById('led-state-text');
+  txt.textContent = state ? t('ledRunning') : (reason || t('ledStopped'));
+  txt.style.color = state ? 'var(--amber)' : (reason ? 'var(--blue)' : 'var(--text-muted)');
+  // 被否决时闪一下
+  if (reason) flashCard('led-state-text');
+}
+
+function syncPump(state, reason) {
+  pumpState = state;
+  const el = document.getElementById('pumpToggle');
+  el.checked = state;
+  document.getElementById('pump-label').textContent = state ? t('stateOn') : t('stateOff');
+  const txt = document.getElementById('pump-state-text');
+  txt.textContent = state ? t('pumpRunning') : (reason || t('pumpStopped'));
+  txt.style.color = state ? 'var(--blue)' : (reason ? 'var(--blue)' : 'var(--text-muted)');
+  if (reason) flashCard('pump-state-text');
+}
+
+function flashCard(id) {
+  const el = document.getElementById(id);
+  el.style.fontWeight = '600';
+  setTimeout(() => el.style.fontWeight = '', 2000);
+}
+
+// =============================================
+// 手动发送
+// =============================================
+function manualSend() {
+  const input = document.getElementById('hexInput');
+  const val = input.value.trim();
+  if (!val) return;
+  sendHex(val);
+  input.value = '';
+}
+
+// =============================================
+// UI 辅助
+// =============================================
+function setBtStatus(state) {
+  const dot  = document.getElementById('btDot');
+  const text = document.getElementById('btStatusText');
+  const bars = document.querySelectorAll('.signal-bar');
+  dot.className = 'bt-dot ' + state;
+  if (state === 'connected') {
+    text.textContent = btDevice ? btDevice.name : t('connected');
+    document.getElementById('btnConnect').style.display = 'none';
+    document.getElementById('btnDisconnect').style.display = '';
+    bars.forEach((b, i) => b.classList.add('active'));
+  } else if (state === 'connecting') {
+    text.textContent = t('connecting');
+    document.getElementById('btnConnect').disabled = true;
+  } else {
+    text.textContent = t('disconnected');
+    document.getElementById('btnConnect').style.display = '';
+    document.getElementById('btnConnect').disabled = false;
+    document.getElementById('btnDisconnect').style.display = 'none';
+    bars.forEach(b => b.classList.remove('active'));
+  }
+}
+
+function enableControls(en) {
+  ['ledToggle','pumpToggle'].forEach(id => document.getElementById(id).disabled = !en);
+  ['btnRefresh','btnSend','cmd01','cmd02','cmd03','cmd04','cmd05','cmd06'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = !en;
+  });
+  if (en) {
+    document.getElementById('led-state-text').textContent  = t('ledStopped');
+    document.getElementById('pump-state-text').textContent = t('pumpStopped');
+    document.getElementById('led-state-text').style.color  = 'var(--text-muted)';
+    document.getElementById('pump-state-text').style.color = 'var(--text-muted)';
+    // 阈值按钮在阈值数据加载后才启用
+    if (thresholdsLoaded) enableThresholdControls(true);
+  } else {
+    document.getElementById('led-state-text').textContent  = t('waitConnect');
+    document.getElementById('pump-state-text').textContent = t('waitConnect');
+    thresholdsLoaded = false;
+    enableThresholdControls(false);
+  }
+}
+
+function updateLastTime() {
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent =
+    t('lastUpdate') + now.toLocaleTimeString('zh-CN');
+}
+
+// =============================================
+// Log
+// =============================================
+function log(type, msg) {
+  const body = document.getElementById('logBody');
+  const now  = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  const prefix = { tx:'→ TX', rx:'← RX', sys:'• SYS', err:'✗ ERR' }[type] || '·';
+  line.innerHTML = `<span class="log-time">${now}</span><span class="log-msg ${type}">[${prefix}] ${escHtml(msg)}</span>`;
+  body.appendChild(line);
+  if (document.getElementById('autoScrollCheck').checked) {
+    body.scrollTop = body.scrollHeight;
+  }
+  // 最多保留 200 条
+  while (body.children.length > 200) body.removeChild(body.firstChild);
+}
+
+function clearLog() {
+  document.getElementById('logBody').innerHTML = '';
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// =============================================
+// Toast 通知
+// =============================================
+function toast(msg, type='info') {
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+// =============================================
+// 初始化
+// =============================================
+log('sys', t('logReady'));
+log('sys', t('logBrowser') + navigator.userAgent.split(') ')[0].split('(')[1]);
+if (!navigator.bluetooth) {
+  log('err', t('toastBrowserErr'));
+  toast(t('toastUseChrome'), 'error');
+}
+</script>
+</body>
+</html>
