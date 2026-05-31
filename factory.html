@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">具身工场 | Embodied-Ai-Factory — 给机器注入灵魂，培养极客精神</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ===== Reset & Base ===== */
+        *,*::before,*::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #F5F0EB;
+            color: #2C2420;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        body.lang-en { font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif; }
+        ::selection { background: #C4A87C55; color: #fff; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #F5F0EB; }
+        ::-webkit-scrollbar-thumb { background: #C4A87C44; border-radius: 3px; }
+
+        :root {
+            --gold: #C4A87C;
+            --gold-dim: #C4A87C55;
+            --amber: #B8966A;
+            --red: #C45A5A;
+            --bg-warm: #F5F0EB;
+            --bg-card: #FFFFFF;
+            --bg-glass: rgba(255,255,255,0.6);
+            --text: #2C2420;
+            --text-dim: #8A7D73;
+        }
+
+        .font-orbitron { font-family: 'Orbitron', monospace; }
+        .font-mono { font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace !important; }
+
+        /* ===== Decorative geometric marker (replaces emoji icons) ===== */
+        .icon-diamond { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .icon-diamond::before { content: ''; width: 8px; height: 8px; background: var(--gold); transform: rotate(45deg); border-radius: 1px; }
+        .icon-diamond-sm::before { width: 6px; height: 6px; }
+        .icon-diamond-lg::before { width: 14px; height: 14px; }
+        .icon-circle { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .icon-circle::before { content: ''; width: 8px; height: 8px; border: 1.5px solid var(--gold); border-radius: 50%; }
+        .icon-dot { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .icon-dot::before { content: ''; width: 5px; height: 5px; background: var(--gold-dim); border-radius: 50%; }
+
+        /* ===== Warm cream + red berry + glass ripple background ===== */
+        .hero-bg-sphere {
+            position: absolute; border-radius: 50%;
+            pointer-events: none; z-index: 0;
+            will-change: transform;
+        }
+        .hero-bg-sphere-1 {
+            width: 280px; height: 280px;
+            background: radial-gradient(circle at 40% 40%, rgba(220,120,100,0.15), rgba(200,90,80,0.05) 60%, transparent 80%);
+            top: 5%; left: -5%;
+        }
+        .hero-bg-sphere-2 {
+            width: 200px; height: 200px;
+            background: radial-gradient(circle at 60% 30%, rgba(210,130,110,0.12), rgba(190,100,90,0.04) 55%, transparent 75%);
+            bottom: 15%; right: 5%;
+        }
+        .hero-bg-sphere-3 {
+            width: 150px; height: 150px;
+            background: radial-gradient(circle at 30% 50%, rgba(230,160,140,0.1), rgba(200,120,100,0.03) 50%, transparent 70%);
+            top: 55%; left: 60%;
+        }
+        .hero-bg-sphere-4 {
+            width: 100px; height: 100px;
+            background: radial-gradient(circle at 50% 40%, rgba(220,150,130,0.08), transparent 60%);
+            top: 25%; right: 30%;
+        }
+        .hero-bg-sphere-5 {
+            width: 120px; height: 120px;
+            background: radial-gradient(circle at 50% 50%, rgba(200,100,90,0.06), transparent 60%);
+            bottom: 30%; left: 30%;
+        }
+
+        /* Glass ripple overlay */
+        .hero-glass-ripple {
+            position: absolute; inset: -20%;
+            pointer-events: none; z-index: 0;
+            background:
+                radial-gradient(ellipse 30% 20% at 20% 30%, rgba(255,255,255,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 15% at 80% 60%, rgba(255,255,255,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 25% 18% at 50% 80%, rgba(255,255,255,0.05) 0%, transparent 50%);
+            transform: rotate(-5deg);
+        }
+
+        /* Mouse dim spotlight — global */
+        .global-dim-spot {
+            position: fixed; inset: 0;
+            pointer-events: none; z-index: 9998;
+        }
+
+        /* ===== Navbar ===== */
+        #navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 14px 40px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: transparent;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            transition: 0.35s;
+        }
+        #navbar.scrolled { border-bottom-color: rgba(0,0,0,0.06); }
+        #navbar.scrolled { background: rgba(245,240,235,0.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom-color: rgba(0,0,0,0.06); }
+        #navbar.scrolled .nav-brand-name { transform: scale(0.85); transform-origin: left center; }
+        #navbar.scrolled .nav-brand-tag { transform: scale(0.85); transform-origin: left center; }
+        #navbar.scrolled .nav-links a { font-size: 11px; padding: 5px 9px; }
+        #navbar.scrolled .lang-toggle { font-size: 11px; padding: 3px 9px; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+        .nav-brand-name { font-size: 17px; font-weight: 800; color: #2C2420; letter-spacing: 2px; line-height: 1.2; transition: 0.3s; }
+        .nav-brand-name .grad {
+            background: linear-gradient(135deg, var(--gold), #B8966A);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .nav-brand-tag { font-size: 9px; color: var(--text-dim); letter-spacing: 2px; transition: 0.3s; }
+
+        .nav-center { display: flex; align-items: center; gap: 6px; }
+        .nav-links { display: flex; gap: 6px; list-style: none; flex-wrap: wrap; justify-content: center; }
+        .nav-links a {
+            color: var(--text-dim); text-decoration: none; font-size: 12.5px; padding: 6px 14px;
+            transition: 0.3s; position: relative; border-radius: 6px; letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .nav-links a:hover, .nav-links a.active { color: #2C2420; background: rgba(0,0,0,0.04); }
+        .nav-links a::after {
+            content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 2px; background: var(--gold); transition: 0.3s; border-radius: 1px;
+        }
+        .nav-links a:hover::after, .nav-links a.active::after { width: 60%; }
+
+        .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+        .hamburger span { width: 24px; height: 2px; background: #2C2420; border-radius: 2px; transition: 0.3s; }
+
+        /* Language Toggle */
+        .lang-toggle {
+            display: flex; align-items: center; gap: 4px;
+            padding: 4px 12px; border-radius: 6px;
+            background: transparent; border: 1px solid rgba(0,0,0,0.12);
+            color: var(--text-dim); font-size: 12px; cursor: pointer;
+            transition: 0.3s; font-family: 'Orbitron', monospace; font-weight: 600;
+            margin-left: 8px; flex-shrink: 0;
+        }
+        .lang-toggle:hover { border-color: var(--gold); color: var(--gold); }
+        .lang-toggle .active-lang { color: var(--gold); }
+        .lang-toggle .inactive-lang { color: var(--text-dim); }
+        .lang-toggle .sep { color: rgba(0,0,0,0.15); }
+
+        /* ===== Hero ===== */
+        #hero {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 120px 40px 80px;
+            background: var(--bg-warm);
+            overflow: hidden; position: relative;
+        }
+        .hero-content { position: relative; z-index: 1; max-width: 900px; text-align: center; }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 12px; color: var(--gold);
+            border: 1px solid var(--gold-dim); background: rgba(196,168,124,0.06);
+            padding: 6px 18px; border-radius: 20px; margin-bottom: 24px;
+            letter-spacing: 0.5px;
+        }
+        .hero-badge .dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; animation: pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .hero-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(28px, 5vw, 58px); font-weight: 900;
+            line-height: 1.15; margin-bottom: 20px;
+        }
+        .hero-title .line1 { color: #2C2420; display: block; }
+        .hero-title .line2 {
+            display: block;
+            background: linear-gradient(135deg, var(--gold), var(--amber), var(--gold));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            background-size: 200% 200%; animation: grad-shift 4s ease infinite;
+        }
+        @keyframes grad-shift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .hero-sub {
+            font-size: 16px; color: var(--text-dim); line-height: 1.9;
+            margin-bottom: 36px; max-width: 640px; margin-left: auto; margin-right: auto;
+        }
+        .hero-sub strong { color: #2C2420; }
+        .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+        .btn-prime {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 38px; border-radius: 40px;
+            background: linear-gradient(135deg, var(--gold), #B8966A);
+            color: #fff; font-size: 15px; font-weight: 600;
+            text-decoration: none; border: none; cursor: pointer;
+            transition: 0.3s; box-shadow: 0 2px 20px rgba(196,168,124,0.3);
+        }
+        .btn-prime:hover { transform: translateY(-2px); box-shadow: 0 4px 30px rgba(196,168,124,0.4); }
+        .btn-ghost {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 38px; border-radius: 40px;
+            background: transparent; color: #2C2420; font-size: 15px; font-weight: 500;
+            text-decoration: none; border: 1px solid rgba(0,0,0,0.12); cursor: pointer; transition: 0.3s;
+        }
+        .btn-ghost:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+
+        /* Mascot */
+        @keyframes float-y { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+        /* Hero staggered entrance */
+        .hero-stagger { opacity: 0; transform: translateY(24px); transition: 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+        .hero-stagger.in { opacity: 1; transform: translateY(0); }
+        .hero-stagger:nth-child(1) { transition-delay: 0.1s; }
+        .hero-stagger:nth-child(2) { transition-delay: 0.25s; }
+        .hero-stagger:nth-child(3) { transition-delay: 0.4s; }
+        .hero-stagger:nth-child(4) { transition-delay: 0.55s; }
+        .hero-stagger:nth-child(5) { transition-delay: 0.7s; }
+
+        /* ===== Section Common ===== */
+        section { position: relative; scroll-margin-top: 10px; }
+        .sec-inner { max-width: 1200px; margin: 0 auto; padding: 100px 40px; }
+        .sec-tag {
+            display: inline-block; font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
+            color: var(--gold); border: 1px solid var(--gold-dim); padding: 5px 18px; border-radius: 20px; margin-bottom: 16px;
+            font-family: 'Orbitron', monospace; font-weight: 600;
+        }
+        .sec-title {
+            font-size: clamp(26px, 3.5vw, 40px); font-weight: 800; color: #2C2420;
+            margin-bottom: 12px; line-height: 1.3;
+        }
+        .sec-desc { font-size: 15px; color: var(--text-dim); max-width: 600px; line-height: 1.8; }
+
+        /* ===== Architecture Z-layout ===== */
+        #architecture { background: var(--bg-warm); overflow: hidden; }
+        .arch-z {
+            display: flex; flex-direction: column;
+            margin-top: 48px; position: relative;
+        }
+        .arch-z-row {
+            display: flex; align-items: flex-start;
+            position: relative;
+        }
+        .arch-z-row.right { justify-content: flex-end; }
+        .arch-z-row .spacer { flex: 1; min-width: 40px; }
+        .arch-z-row.left .spacer { order: 1; }
+        .arch-z-row.right .spacer { order: 0; }
+
+        .arch-layer-z {
+            width: 48%; background: var(--bg-card);
+            border: 1px solid rgba(0,0,0,0.06); border-radius: 16px;
+            padding: 28px 32px; position: relative; overflow: hidden;
+            transition: 0.6s cubic-bezier(0.22, 1, 0.36, 1); opacity: 0;
+        }
+        .arch-z-row.left .arch-layer-z { transform: translateX(-30px); }
+        .arch-z-row.right .arch-layer-z { transform: translateX(30px); }
+        .arch-z-row.left .arch-layer-z.visible,
+        .arch-z-row.right .arch-layer-z.visible { opacity: 1; transform: translateX(0); }
+        .arch-layer-z:hover { border-color: var(--gold-dim); }
+        .arch-layer-z .layer-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 10px; font-family: 'Orbitron', monospace; font-weight: 600; letter-spacing: 1px;
+            padding: 4px 12px; border-radius: 8px; margin-bottom: 10px;
+        }
+        .arch-layer-z h4 { font-size: 16px; color: #2C2420; margin-bottom: 6px; }
+        .arch-layer-z p { font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+        .arch-layer-z .tech-tags { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .arch-layer-z .tech-tags span {
+            font-size: 11px; padding: 3px 12px; border-radius: 6px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.06); color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .arch-layer-z:nth-child(1) { border-left: 3px solid var(--gold); }
+        .arch-layer-z:nth-child(1) .layer-badge { background: rgba(196,168,124,0.1); color: var(--gold); }
+        .arch-layer-z:nth-child(2) { border-left: 3px solid var(--amber); }
+        .arch-layer-z:nth-child(2) .layer-badge { background: rgba(184,150,106,0.1); color: var(--amber); }
+        .arch-layer-z:nth-child(3) { border-left: 3px solid var(--gold); }
+        .arch-layer-z:nth-child(3) .layer-badge { background: rgba(196,168,124,0.1); color: var(--gold); }
+        .arch-layer-z:nth-child(4) { border-left: 3px solid var(--amber); }
+        .arch-layer-z:nth-child(4) .layer-badge { background: rgba(184,150,106,0.1); color: var(--amber); }
+
+        /* Zigzag connectors */
+        .arch-z-connector {
+            display: flex; align-items: center; justify-content: center;
+            padding: 8px 0; position: relative;
+            opacity: 0; transform: scaleX(0); transition: 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .arch-z-connector.visible { opacity: 1; transform: scaleX(1); }
+        .arch-z-connector svg { display: block; }
+
+        /* Self-Healing loop wrapper */
+        .arch-z-loop {
+            position: relative; margin-top: 40px;
+            background: var(--bg-card); border: 1px solid rgba(196,168,124,0.08);
+            border-radius: 20px; padding: 28px 32px;
+            opacity: 0; transform: translateY(20px); transition: 0.6s;
+        }
+        .arch-z-loop.visible { opacity: 1; transform: translateY(0); }
+        .arch-z-loop h4 { font-size: 15px; color: #2C2420; margin-bottom: 4px; }
+        .arch-z-loop p { font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+        .arch-z-loop-tags { display: flex; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; margin-top: 12px; }
+
+        .arch-z-loop::before {
+            content: ''; position: absolute; inset: -1px; border-radius: 21px;
+            border: 1px solid rgba(196,168,124,0.08);
+            pointer-events: none;
+            animation: loop-breathe 4s ease-in-out 1s infinite;
+        }
+        @keyframes loop-breathe { 0%,100%{border-color:rgba(196,168,124,0.08);opacity:0.6} 50%{border-color:rgba(196,168,124,0.3);opacity:1} }
+
+        @media (max-width: 900px) {
+            .arch-layer-z { width: 60%; padding: 20px 24px; }
+        }
+        @media (max-width: 600px) {
+            .arch-z-row { flex-direction: column !important; }
+            .arch-z-row .spacer { display: none; }
+            .arch-layer-z { width: 100%; }
+            .arch-z-row.right .arch-layer-z { order: 0; }
+        }
+
+        /* ===== Phase Cards ===== */
+        .phase-desc { margin-bottom: 36px; }
+        .card-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; align-items: start; perspective: 1000px; }
+        .card-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; perspective: 1000px; }
+        .card-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; align-items: start; perspective: 1000px; }
+
+        .crystal-card {
+            background: var(--bg-card); border: 1px solid rgba(0,0,0,0.06); border-radius: 16px;
+            padding: 24px 20px; cursor: pointer; position: relative; overflow: hidden;
+            transition: 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); opacity: 0; transform: translateY(20px);
+            transform-style: preserve-3d; will-change: transform;
+        }
+        .crystal-card.visible { opacity: 1; transform: translateY(0); }
+        .crystal-card:hover { border-color: var(--gold-dim); box-shadow: 0 4px 24px rgba(0,0,0,0.04); }
+        .crystal-card .card-icon { font-size: 28px; margin-bottom: 12px; }
+        .crystal-card h4 { font-size: 14px; color: #2C2420; margin-bottom: 6px; }
+        .crystal-card .card-brief { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+        .crystal-card .card-detail {
+            max-height: 0; overflow: hidden; transition: 0.5s;
+            font-size: 12px; color: var(--text-dim); line-height: 1.7;
+        }
+        .crystal-card .card-detail.open { max-height: 300px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.06); }
+        .crystal-card .card-detail code {
+            display: block; background: rgba(0,0,0,0.04); padding: 8px 12px; border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gold);
+            margin-top: 8px; border: 1px solid rgba(0,0,0,0.03);
+        }
+        .crystal-card .expand-hint { font-size: 10px; color: var(--gold-dim); margin-top: 10px; display: flex; align-items: center; gap: 4px; }
+        .crystal-card.visible .expand-hint { animation: hint-pulse 3s ease-in-out 2s infinite; }
+        @keyframes hint-pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+        .crystal-card::before { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background:radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(196,168,124,0.08) 0%, transparent 60%); opacity:0; transition:opacity 0.4s; pointer-events:none; }
+        .crystal-card:hover::before { opacity:1; }
+        .crystal-card .card-icon, .crystal-card h4, .crystal-card .card-brief,
+        .crystal-card .card-detail, .crystal-card .expand-hint, .crystal-card .tech-tags { position: relative; z-index: 1; }
+
+        .project-card {
+            background: var(--bg-card); border: 1px solid rgba(0,0,0,0.06); border-radius: 16px;
+            overflow: hidden; transition: 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 0; transform: translateY(20px);
+            transform-style: preserve-3d; will-change: transform;
+        }
+        .project-card.visible { opacity: 1; transform: translateY(0); }
+        .project-card:hover { border-color: var(--gold-dim); box-shadow: 0 4px 24px rgba(0,0,0,0.04); }
+        .project-card .card-head { padding: 22px 24px 16px; display: flex; align-items: flex-start; gap: 14px; }
+        .project-card .card-icon-lg { font-size: 32px; flex-shrink: 0; }
+        .project-card .card-head h4 { font-size: 16px; color: #2C2420; margin-bottom: 4px; }
+        .project-card .card-head .tagline { font-size: 12px; color: var(--text-dim); }
+        .project-card .card-body { padding: 0 24px 20px; }
+        .project-card .card-body p { font-size: 13px; color: var(--text-dim); line-height: 1.7; margin-bottom: 12px; }
+        .project-card .card-body .highlight-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+        .project-card .card-body .highlight-list li { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--text); }
+        .project-card .card-body .highlight-list li svg { flex-shrink: 0; margin-top: 2px; }
+        .project-card .card-foot { padding: 12px 24px; border-top: 1px solid rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; }
+        .project-card .card-foot .tag { font-size: 10px; padding: 3px 12px; border-radius: 6px; background: rgba(0,0,0,0.04); color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+
+        /* ===== Mockup ===== */
+        .mockup-frame { background: var(--bg-card); border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; overflow: hidden; margin: 16px 0; }
+        .mockup-frame .mockup-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(0,0,0,0.03); border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .mockup-frame .mockup-dots { display: flex; gap: 5px; }
+        .mockup-frame .mockup-dots span { width: 8px; height: 8px; border-radius: 50%; }
+        .mockup-frame .mockup-dots span:nth-child(1) { background: #ff5f57; }
+        .mockup-frame .mockup-dots span:nth-child(2) { background: #ffbd2e; }
+        .mockup-frame .mockup-dots span:nth-child(3) { background: #28c840; }
+        .mockup-frame .mockup-title { font-size: 11px; color: var(--text-dim); margin-left: 6px; }
+        .mockup-frame .mockup-url { margin-left: auto; font-size: 10px; color: var(--text-dim); background: rgba(0,0,0,0.06); padding: 3px 12px; border-radius: 6px; }
+        .mockup-frame iframe { width: 100%; display: block; border: none; height: 360px; }
+        .mockup-frame .mockup-note { padding: 10px 16px; font-size: 11px; color: var(--text-dim); border-top: 1px solid rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .mockup-frame .mockup-note a { color: var(--gold); text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+        .mockup-frame .mockup-note a:hover { text-decoration: underline; }
+
+        /* ===== Comparison Table ===== */
+        #comparison { background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(196,168,124,0.03) 0%, transparent 70%), var(--bg-warm); }
+        .cmp-table-wrap { margin-top: 40px; border-radius: 16px; overflow-x: auto; border: 1px solid rgba(0,0,0,0.06); background: var(--bg-card); opacity: 0; transform: translateY(15px); transition: 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+        .cmp-table-wrap.visible { opacity: 1; transform: translateY(0); }
+        .cmp-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        .cmp-table th, .cmp-table td { padding: 16px 24px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 14px; }
+        .cmp-table thead th { font-family: 'Orbitron', monospace; font-size: 12px; letter-spacing: 1px; font-weight: 700; text-transform: uppercase; background: rgba(0,0,0,0.02); color: var(--text-dim); }
+        .cmp-table thead th:first-child { color: var(--text-dim); }
+        .cmp-table thead th:nth-child(2) { color: var(--amber); }
+        .cmp-table thead th:nth-child(3) { color: var(--text-dim); }
+        .cmp-table tbody tr { transition: 0.3s; }
+        .cmp-table tbody tr:hover { background: rgba(0,0,0,0.03); }
+        .cmp-table tbody tr { opacity: 0; transform: translateX(20px); transition: 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+        .cmp-table tbody tr.in { opacity: 1; transform: translateX(0); }
+        .cmp-table tbody td:first-child { font-weight: 600; color: #2C2420; }
+        .cmp-table tbody td:nth-child(2) { color: var(--gold); }
+        .cmp-table tbody td:nth-child(3) { color: var(--text-dim); }
+        .cmp-table .feature-icon { margin-right: 6px; }
+
+        /* ===== Footer ===== */
+        footer { border-top: 1px solid rgba(0,0,0,0.06); padding: 60px 40px 40px; text-align: center; opacity: 0; transform: translateY(20px); transition: 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+        footer.in { opacity: 1; transform: translateY(0); }
+        footer .slogan { font-size: 16px; color: var(--text-dim); max-width: 600px; margin: 0 auto 24px; line-height: 1.8; }
+        footer .slogan .glow { background: linear-gradient(135deg, var(--gold), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; }
+        footer .copy { font-size: 13px; color: rgba(0,0,0,0.2); }
+        footer .copy strong { color: var(--gold-dim); }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 1024px) {
+            .card-grid-4 { grid-template-columns: repeat(2, 1fr); }
+            .card-grid-3 { grid-template-columns: repeat(2, 1fr); }
+            .card-grid-5 { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 900px) {
+            .arch-grid { grid-template-columns: 1fr; }
+            .arch-beam-col { display: none; }
+            .sec-inner { padding: 60px 24px; }
+            #navbar { padding: 12px 20px; }
+            .nav-links a { font-size: 11px; padding: 5px 10px; }
+            .cmp-table th, .cmp-table td { padding: 12px 16px; font-size: 12px; }
+        }
+        @media (max-width: 768px) {
+            .hamburger { display: flex; }
+            .nav-center { order: 3; width: 100%; }
+            .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0;
+                flex-direction: column; background: rgba(245,240,235,0.85); backdrop-filter: blur(12px);
+                padding: 16px 20px; border-bottom: 1px solid rgba(0,0,0,0.06); gap: 4px;
+            }
+            .nav-links.open { display: flex; }
+            .lang-toggle { margin-left: auto; }
+            .card-grid-3 { grid-template-columns: 1fr; }
+            .card-grid-4 { grid-template-columns: 1fr; }
+            .card-grid-5 { grid-template-columns: repeat(2, 1fr); }
+            .mockup-frame iframe { height: 260px; }
+        }
+
+        #phase1 { background: linear-gradient(180deg, var(--bg-warm), #FFFFFF); }
+        #phase2 { background: linear-gradient(180deg, #FFFFFF, var(--bg-warm)); }
+        #phase3 { background: linear-gradient(180deg, var(--bg-warm), #FFFFFF); }
+
+        .inspirer-placeholder { width:100%; height:360px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(135deg,#F0EBE6,#F5F0EB); color:#8A7D73; text-align:center; padding:40px; }
+        .inspirer-placeholder .big-icon { font-size:48px; margin-bottom:16px; opacity:0.6; }
+        .inspirer-placeholder h5 { font-size:16px; color:#2C2420; margin-bottom:8px; }
+        .inspirer-placeholder p { font-size:13px; max-width:400px; line-height:1.7; }
+    </style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- NAVBAR -->
+<!-- ============================================================ -->
+<nav id="navbar">
+    <a href="#hero" class="nav-logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path d="M14 2L2 26h24L14 2z" fill="url(#lg-nav)" opacity="0.85"/>
+            <circle cx="14" cy="17" r="3" fill="#fff" opacity="0.95"/>
+            <defs><linearGradient id="lg-nav" x1="2" y1="2" x2="26" y2="26">
+                <stop stop-color="#C4A87C"/><stop offset="1" stop-color="#D8BF8A"/>
+            </linearGradient></defs>
+        </svg>
+        <div>
+            <div class="nav-brand-name"><span class="grad">具身工场</span></div>
+            <div class="nav-brand-tag">Embodied-Ai-Factory</div>
+        </div>
+    </a>
+    <button class="hamburger" id="hamburger" aria-label="菜单">
+        <span></span><span></span><span></span>
+    </button>
+    <div class="nav-center">
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#hero" class="active" data-i18n="nav.home">工场首页</a></li>
+            <li><a href="#architecture" data-i18n="nav.arch">总架构原理</a></li>
+            <li><a href="#phase1" data-i18n="nav.p1">教学基石</a></li>
+            <li><a href="#phase2" data-i18n="nav.p2">全栈协同</a></li>
+            <li><a href="#phase3" data-i18n="nav.p3">高级具身</a></li>
+            <li><a href="#comparison" data-i18n="nav.cmp">对比分析</a></li>
+        </ul>
+        <!-- Language Toggle -->
+        <button class="lang-toggle" id="langToggle" onclick="switchLang()" title="Switch language / 切换语言">
+            <span class="active-lang" id="langZh">中</span>
+            <span class="sep">/</span>
+            <span id="langEn">EN</span>
+        </button>
+    </div>
+</nav>
+
+<!-- ============================================================ -->
+<!-- HERO -->
+<!-- ============================================================ -->
+<section id="hero">
+    <!-- Red berry glass spheres -->
+    <div class="hero-bg-sphere hero-bg-sphere-1" id="sphere1"></div>
+    <div class="hero-bg-sphere hero-bg-sphere-2" id="sphere2"></div>
+    <div class="hero-bg-sphere hero-bg-sphere-3" id="sphere3"></div>
+    <div class="hero-bg-sphere hero-bg-sphere-4" id="sphere4"></div>
+    <div class="hero-bg-sphere hero-bg-sphere-5" id="sphere5"></div>
+    <!-- Glass ripple overlay -->
+    <div class="hero-glass-ripple"></div>
+    <div class="hero-content">
+        <div class="hero-badge hero-stagger" data-i18n="hero.badge"><span class="dot"></span> 具身工场 · 基于 AI Agent 的嵌入式开发实践教学平台</div>
+        <h1 class="hero-title hero-stagger">
+            <span class="line1" data-i18n="hero.title1">欢迎来到</span>
+            <span class="line2" data-i18n="hero.title2">具身工场</span>
+        </h1>
+        <p class="hero-sub hero-stagger" data-i18n-html="hero.sub">
+            <strong>从自然语言到硬件运行</strong> —— 体验 AI Coding 带来的物理世界秒级快速迭代。<br>
+            智能硬件的极速构建引擎，让 AI 不再只是屏幕里的对话，而是拥有物理躯体的智能。
+        </p>
+        <div class="hero-actions hero-stagger">
+            <a href="#architecture" class="btn-prime" data-i18n="hero.cta">
+                开启具身之旅
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+            <a href="#phase1" class="btn-ghost" data-i18n="hero.sec">浏览教学案例</a>
+        </div>
+
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- ARCHITECTURE — 三层一闭环 Z-layout -->
+<!-- ============================================================ -->
+<section id="architecture">
+    <div class="sec-inner">
+        <div style="text-align:center;margin-bottom:48px;">
+            <span class="sec-tag" data-i18n="arch.tag">总架构原理</span>
+            <h2 class="sec-title" data-i18n="arch.title">三层一闭环 · 具身工场技术架构</h2>
+            <p class="sec-desc" style="margin:0 auto;" data-i18n="arch.desc">从对话交互到底层硬件执行，贯穿全栈的 Self-Healing 自愈闭环。</p>
+        </div>
+
+        <div class="arch-z">
+
+            <!-- L1: Left -->
+            <div class="arch-z-row left">
+                <div class="arch-layer-z" style="transition-delay:0.1s;">
+                    <div class="layer-badge" data-i18n="arch.l1.badge">L1 · 对话交互层</div>
+                    <h4 data-i18n="arch.l1.title">Conversational Layer</h4>
+                    <p data-i18n="arch.l1.desc">用户在工场终端中以自然语言描述功能需求，如"点亮三盏 LED 流水灯"或"读取温湿度传感器数据"。系统内置动态打字机效果实时回显，支持中英文混合指令解析。</p>
+                    <div class="tech-tags"><span data-i18n="arch.l1.t1">自然语言</span><span data-i18n="arch.l1.t2">意图识别</span><span data-i18n="arch.l1.t3">上下文感知</span></div>
+                </div>
+                <div class="spacer"></div>
+            </div>
+
+            <!-- Connector L1 → L2 -->
+            <div class="arch-z-connector" style="transition-delay:0.2s;">
+                <svg width="120" height="36" viewBox="0 0 120 36" fill="none">
+                    <path d="M0 18 H80 C90 18 100 10 120 0" stroke="#C4A87C" stroke-width="2" fill="none"/>
+                    <path d="M108 6 L120 0 L114 14" stroke="#C4A87C" stroke-width="2" fill="none"/>
+                </svg>
+            </div>
+
+            <!-- L2: Right -->
+            <div class="arch-z-row right">
+                <div class="spacer"></div>
+                <div class="arch-layer-z" style="transition-delay:0.3s;">
+                    <div class="layer-badge" data-i18n="arch.l2.badge">L2 · AI 处理层</div>
+                    <h4 data-i18n="arch.l2.title">AI Processing Layer</h4>
+                    <p data-i18n="arch.l2.desc">AI Agent 接收自然语言指令，基于知识库匹配硬件模板，自动生成规范化的 C / C++ 源代码。内置代码审查机制，确保寄存器配置、引脚映射、时钟树初始化的正确性。</p>
+                    <div class="tech-tags"><span data-i18n="arch.l2.t1">AI Agent</span><span data-i18n="arch.l2.t2">代码生成</span><span data-i18n="arch.l2.t3">静态分析</span><span data-i18n="arch.l2.t4">模板引擎</span></div>
+                </div>
+            </div>
+
+            <!-- Connector L2 → L3 -->
+            <div class="arch-z-connector" style="transition-delay:0.4s;">
+                <svg width="120" height="36" viewBox="0 0 120 36" fill="none">
+                    <path d="M120 18 H40 C30 18 20 26 0 36" stroke="#C4A87C" stroke-width="2" fill="none"/>
+                    <path d="M12 30 L0 36 L6 22" stroke="#C4A87C" stroke-width="2" fill="none"/>
+                </svg>
+            </div>
+
+            <!-- L3: Left -->
+            <div class="arch-z-row left">
+                <div class="arch-layer-z" style="transition-delay:0.5s;">
+                    <div class="layer-badge" data-i18n="arch.l3.badge">L3 · 编译部署层</div>
+                    <h4 data-i18n="arch.l3.title">Build &amp; Deployment Layer</h4>
+                    <p data-i18n="arch.l3.desc">运行于 Linux 宿主环境（香橙派）之上，调用 ARM-GCC 工具链自动编译源码，生成 Hex/Bin 二进制固件，并通过 ST-Link 调试器自动烧录至目标硬件。全过程无需人工干预，秒级完成。</p>
+                    <div class="tech-tags"><span data-i18n="arch.l3.t1">ARM-GCC</span><span data-i18n="arch.l3.t2">ST-Link</span><span data-i18n="arch.l3.t3">Orange Pi</span><span data-i18n="arch.l3.t4">Makefile</span></div>
+                </div>
+                <div class="spacer"></div>
+            </div>
+
+            <!-- Connector L3 → L4 -->
+            <div class="arch-z-connector" style="transition-delay:0.6s;">
+                <svg width="120" height="36" viewBox="0 0 120 36" fill="none">
+                    <path d="M0 18 H80 C90 18 100 10 120 0" stroke="#C4A87C" stroke-width="2" fill="none"/>
+                    <path d="M108 6 L120 0 L114 14" stroke="#C4A87C" stroke-width="2" fill="none"/>
+                </svg>
+            </div>
+
+            <!-- L4: Right -->
+            <div class="arch-z-row right">
+                <div class="spacer"></div>
+                <div class="arch-layer-z" style="transition-delay:0.7s;">
+                    <div class="layer-badge" data-i18n="arch.l4.badge">L4 · 硬件执行层</div>
+                    <h4 data-i18n="arch.l4.title">Hardware Execution Layer</h4>
+                    <p data-i18n="arch.l4.desc">STM32 底层硬件接收固件并执行：GPIO 控制、PWM 输出、ADC 采样、I²C/SPI/UART 通信……物理世界与数字代码在此交汇，实现真正的"具身智能"。</p>
+                    <div class="tech-tags"><span data-i18n="arch.l4.t1">STM32</span><span data-i18n="arch.l4.t2">GPIO/PWM</span><span data-i18n="arch.l4.t3">I²C/SPI</span><span data-i18n="arch.l4.t4">FreeRTOS</span></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Self-Healing Loop -->
+        <div class="arch-z-loop" id="loopNote">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                <div style="flex:1;">
+                    <h4 data-i18n="arch.loop.title">Self-Healing 自愈闭环</h4>
+                    <p data-i18n-html="arch.loop.desc">
+                        当编译出错或硬件运行异常时，串口日志实时回传至 AI Agent。
+                        Agent 自动诊断错误根源，修正代码并触发重新编译-烧录循环，
+                        直至硬件按预期运行。全程无需人工介入，实现开发闭环自治。
+                    </p>
+                </div>
+                <div class="arch-z-loop-tags">
+                    <span style="color:var(--gold);" data-i18n="arch.loop.b1">● 编译</span>
+                    <span style="color:var(--gold);" data-i18n="arch.loop.b2">● 烧录</span>
+                    <span style="color:var(--amber);" data-i18n="arch.loop.b3">● 验证</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 1：教学基石 -->
+<!-- ============================================================ -->
+<section id="phase1">
+    <div class="sec-inner">
+        <div class="phase-desc">
+            <span class="sec-tag" data-i18n="p1.tag">第一阶段</span>
+            <h2 class="sec-title" data-i18n="p1.title">教学基石 · 原子级智能硬件</h2>
+            <p class="sec-desc" data-i18n="p1.desc">四大经典入门案例，覆盖显示、灯光、色彩与运动控制，让 AI Coding 从第一行代码开始。</p>
+        </div>
+
+        <div class="card-grid-4">
+            <!-- Card 1: OLED -->
+            <div class="crystal-card" data-delay="0">
+                <div class="card-icon"><span class="icon-diamond icon-diamond-lg"></span></div>
+                <h4 data-i18n="p1.c1.title">OLED 显示屏</h4>
+                <div class="card-brief" data-i18n="p1.c1.brief">AI 自动计算字高留白与 page 布局，满屏显示。</div>
+                <div class="card-detail" data-i18n-html="p1.c1.detail">
+                    输入自然语言提示词，AI 自动配置 SSD1306 I²C 驱动，动态计算字体高度与行间距，实现整屏无溢出排版。支持中英文混排与自定义图形。
+                    <code data-i18n="p1.c1.code">提示词："点亮 OLED，居中显示 'Hello World'"</code>
+                </div>
+                <div class="expand-hint" data-i18n="p1.expand">▾ 点击查看详情</div>
+            </div>
+
+            <!-- Card 2: 流水灯 -->
+            <div class="crystal-card" data-delay="100">
+                <div class="card-icon"><span class="icon-diamond icon-diamond-lg"></span></div>
+                <h4 data-i18n="p1.c2.title">极速流水灯</h4>
+                <div class="card-brief" data-i18n="p1.c2.brief">5颗 LED 单方向快速循环跑马灯，秒级编译烧录运行。</div>
+                <div class="card-detail" data-i18n-html="p1.c2.detail">
+                    利用 GPIO 位带操作实现纳秒级翻转，5 颗 LED 以流水灯形式快速循环。AI Agent 自动生成延时计算与循环逻辑，体验秒级从文本到物理光的转换。
+                    <code data-i18n="p1.c2.code">提示词："5 颗 LED 流水灯，每颗亮 200ms"</code>
+                </div>
+                <div class="expand-hint" data-i18n="p1.expand">▾ 点击查看详情</div>
+            </div>
+
+            <!-- Card 3: RGB -->
+            <div class="crystal-card" data-delay="200">
+                <div class="card-icon"><span class="icon-diamond icon-diamond-lg"></span></div>
+                <h4 data-i18n="p1.c3.title">三色 LED 七彩渐变</h4>
+                <div class="card-brief" data-i18n="p1.c3.brief">基于 HSV 色彩空间算法，实现 11 秒七彩呼吸渐变。</div>
+                <div class="card-detail" data-i18n-html="p1.c3.detail">
+                    AI 自动创建子目录存储多版本代码，基于 HSV 色彩空间生成 PWM 控制算法，11 秒完成从红到紫的完整渐变周期，呼吸效果平滑自然。
+                    <code data-i18n="p1.c3.code">提示词："RGB LED 七彩渐变呼吸，周期 11 秒"</code>
+                </div>
+                <div class="expand-hint" data-i18n="p1.expand">▾ 点击查看详情</div>
+            </div>
+
+            <!-- Card 4: 舵机 -->
+            <div class="crystal-card" data-delay="300">
+                <div class="card-icon"><span class="icon-diamond icon-diamond-lg"></span></div>
+                <h4 data-i18n="p1.c4.title">舵机双算法运转对比</h4>
+                <div class="card-brief" data-i18n="p1.c4.brief">线性运动 vs 正弦缓动算法，特性对比一目了然。</div>
+                <div class="card-detail" data-i18n-html="p1.c4.detail">
+                    AI 同时生成两份代码：<strong>线性匀速运动</strong>（启停有冲击）与<strong>正弦缓动算法</strong>（平滑自然、减速停止）。通过对比表格直观展示两种算法的角速度与力矩差异。
+                    <code data-i18n="p1.c4.code">提示词："舵机从 0° 转到 180°，对比线性与正弦算法"</code>
+                </div>
+                <div class="expand-hint" data-i18n="p1.expand">▾ 点击查看详情</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 2：全栈多端 -->
+<!-- ============================================================ -->
+<section id="phase2">
+    <div class="sec-inner">
+        <div class="phase-desc">
+            <span class="sec-tag" data-i18n="p2.tag">第二阶段</span>
+            <h2 class="sec-title" data-i18n="p2.title">全栈多端 · 复杂系统协同开发</h2>
+            <p class="sec-desc" data-i18n="p2.desc">从嵌入式硬件到 Web 前端，全面打通全栈构建与多端交互。</p>
+        </div>
+
+        <div class="card-grid-3">
+            <!-- Case 5: 灵感器 -->
+            <div class="project-card" data-delay="0">
+                <div class="card-head">
+                    <div class="card-icon-lg"><span class="icon-diamond icon-diamond-lg"></span></div>
+                    <div>
+                        <h4 data-i18n="p2.c5.title">具身工场灵感器</h4>
+                        <div class="tagline" data-i18n="p2.c5.tagline">96KB RAM 极限挑战 · 3D 渲染引擎</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p data-i18n="p2.c5.desc">挑战 STM32 96KB RAM 极限内存，通过局部刷新跑通流畅的 3D 圆柱滚动菜单与旋转地球仪。嵌入式端 3D 渲染的里程碑式突破。</p>
+                    <div class="mockup-frame" style="margin:12px 0 0;">
+                        <div class="mockup-bar">
+                            <div class="mockup-dots"><span></span><span></span><span></span></div>
+                            <span class="mockup-title" data-i18n="p2.c5.mtitle">具身工场灵感器 · 解说端</span>
+                            <span class="mockup-url">inspirer.embodied.run</span>
+                        </div>
+                        <iframe src="https://6a13385508f970149d95842c--playful-hamster-41383e.netlify.app/" title="Inspirer Guide" loading="lazy" style="width:100%;height:360px;display:block;border:none;"></iframe>
+                        <div class="mockup-note" data-i18n-html="p2.c5.note">
+                            <span>深度融合交互 · 下方 iframe 嵌入解说端</span>
+                            <a href="https://6a13385508f970149d95842c--playful-hamster-41383e.netlify.app/" target="_blank" rel="noopener" data-i18n="p2.c5.link">
+                                ↗ 全屏打开解说站
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-foot">
+                    <span class="tag">96KB RAM</span>
+                    <span class="tag" style="background:rgba(196,168,124,0.08);color:var(--gold);">3D</span>
+                    <span class="tag" style="background:rgba(196,168,124,0.1);color:var(--gold);">BLE</span>
+                </div>
+            </div>
+
+            <!-- Case 6: 智慧农场 -->
+            <div class="project-card" data-delay="100">
+                <div class="card-head">
+                    <div class="card-icon-lg"><span class="icon-diamond icon-diamond-lg"></span></div>
+                    <div>
+                        <h4 data-i18n="p2.c6.title">STM32 智慧农场生态系统</h4>
+                        <div class="tagline" data-i18n="p2.c6.tagline">FreeRTOS 多任务 · Web 蓝牙仪表盘</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p data-i18n="p2.c6.desc">Claude Code 快速搭建 FreeRTOS 多任务框架，Workbuddy 极速生成现代化 Web 蓝牙控制仪表盘。传感器数据采集 → 逻辑判断 → 执行器控制的完整闭环。</p>
+                    <div class="mockup-frame" style="margin:12px 0 0;">
+                        <div class="mockup-bar">
+                            <div class="mockup-dots"><span></span><span></span><span></span></div>
+                            <span class="mockup-title" data-i18n="p2.c6.mtitle">智慧农场 · Web 控制台</span>
+                            <span class="mockup-url">https://lai-jia-ming.github.io/smart-farm/</span>
+                        </div>
+                        <iframe src="https://lai-jia-ming.github.io/smart-farm/" title="Smart Farm Console" loading="lazy" allow="bluetooth"></iframe>
+                        <div class="mockup-note" data-i18n-html="p2.c6.note">
+                            <span>支持 <strong style="color:var(--gold);">Web Bluetooth API</strong> 实时配对，现场点击即可直接控制实体硬件</span>
+                            <a href="https://lai-jia-ming.github.io/smart-farm/" target="_blank" rel="noopener" data-i18n="p2.c6.link">↗ 独立全屏打开控制台</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-foot">
+                    <span class="tag">FreeRTOS</span>
+                    <span class="tag" style="background:rgba(196,168,124,0.08);color:var(--gold);" data-i18n="p2.c6.tag1">Web Bluetooth</span>
+                    <span class="tag" style="background:rgba(184,150,106,0.1);color:var(--amber);" data-i18n="p2.c6.tag2">仪表盘</span>
+                </div>
+            </div>
+
+            <!-- Case 7: 复古游戏 -->
+            <div class="project-card" data-delay="200">
+                <div class="card-head">
+                    <div class="card-icon-lg"><span class="icon-diamond icon-diamond-lg"></span></div>
+                    <div>
+                        <h4 data-i18n="p2.c7.title">经典复古游戏合集</h4>
+                        <div class="tagline" data-i18n="p2.c7.tagline">飞书发消息即可生成 · Agent 自动烧录</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p data-i18n-html="p2.c7.desc">支持通过<strong style="color:var(--gold);">飞书</strong>发送游戏逻辑提示词，本地 Agent 自动生成贪吃蛇、俄罗斯方块、王牌飞行员游戏的动态 C 代码并自动烧录至 STM32 硬件运行。聊天即开发，游戏秒级生成。</p>
+                    <ul class="highlight-list">
+                        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C4A87C" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg><span data-i18n-html="p2.c7.h1"><strong>贪吃蛇</strong> — AI 自动实现链表蛇身、碰撞检测、分数系统</span></li>
+                        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C4A87C" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg><span data-i18n-html="p2.c7.h2"><strong>俄罗斯方块</strong> — 旋转、消行、七种方块随机生成</span></li>
+                        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C4A87C" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg><span data-i18n-html="p2.c7.h3"><strong>王牌飞行员</strong> — 基于物理引擎的纵版射击游戏</span></li>
+                    </ul>
+                </div>
+                <div class="card-foot">
+                    <span class="tag" data-i18n="p2.c7.tag1">飞书集成</span>
+                    <span class="tag" style="background:rgba(196,168,124,0.08);color:var(--gold);" data-i18n="p2.c7.tag2">AI 生成</span>
+                    <span class="tag" style="background:#D4565615;color:var(--red);" data-i18n="p2.c7.tag3">自动烧录</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PHASE 3：巅峰具身 -->
+<!-- ============================================================ -->
+<section id="phase3">
+    <div class="sec-inner">
+        <div class="phase-desc">
+            <span class="sec-tag" data-i18n="p3.tag">第三阶段</span>
+            <h2 class="sec-title" data-i18n="p3.title">巅峰具身 · Agent 闭环与边缘自治</h2>
+            <p class="sec-desc" data-i18n="p3.desc">打通飞书 Agent 闭环，聊天即开发、控制真实物理世界，实现真正的边缘自治。</p>
+        </div>
+
+        <div class="card-grid-5">
+            <!-- Case 8 -->
+            <div class="crystal-card" data-delay="0">
+                <div class="card-icon"><span class="icon-diamond icon-diamond-lg"></span></div>
+                <h4 data-i18n="p3.c8.title">AI 自动控制流水线电机</h4>
+                <div class="card-brief" data-i18n="p3.c8.brief">飞书发送转速指令，端到端自动编译烧录，物理电机即时响应。</div>
+                <div class="card-detail" data-i18n-html="p3.c8.detail">
+                    Nanobot 智能体接收飞书消息中的<strong>自然语言转速指令</strong>，自动计算 PWM 占空比参数，触发 GCC 编译 → ST-Link 烧录闭环。物理电机转速即时变化，端到端延时小于 30 秒。
+                    <code data-i18n="p3.c8.code">飞书指令："电机转速设为 1200 RPM"</code>
+                </div>
+                <div class="expand-hint" data-i18n="p1.expand">▾ 点击查看详情</div>
+            </div>
+
+            <!-- Case 9 -->
+            <div class="crystal-card" data-delay="80">
+                <div class="card-icon"><span class="icon-diamond icon-diamond-lg"></span></div>
+                <h4 data-i18n="p3.c9.title">PID 倒立摆套件 · 飞书具身控制版</h4>
+                <div class="card-brief" data-i18n="p3.c9.brief">双环串级 PID + 飞书远程控制，专家级知识库加持。</div>
+                <div class="card-detail" data-i18n-html="p3.c9.detail">
+                    接入双环串级 PID 专家级知识库（角度环 + 位置环），通过飞书即可远程启动倒立摆平衡控制、设定旋转圈数与目标角度。AI Agent 自动整定 PID 参数。
+                    <code data-i18n="p3.c9.code">飞书指令："倒立摆启动，旋转 3 圈后回正"</code>
+                </div>
+                <div class="expand-hint" data-i18n="p1.expand">▾ 点击查看详情</div>
+            </div>
+
+            <!-- Case 10 -->
+            <div class="crystal-card" data-delay="160">
+                <div class="card-icon"><span class="icon-diamond icon-diamond-lg"></span></div>
+                <h4 data-i18n="p3.c10.title">AI Agent 机械臂开发实践</h4>
+                <div class="card-brief" data-i18n="p3.c10.brief">自动实现动作逻辑、手势跟随与精准抓取。</div>
+                <div class="card-detail" data-i18n-html="p3.c10.detail">
+                    AI Agent 自动生成多关节机械臂的运动学算法：手势识别 → 坐标映射 → 逆运动学解算 → PWM 输出。支持预设动作序列与实时手势跟随抓取。
+                    <code data-i18n="p3.c10.code">提示词："机械臂跟随手势，抓取物体后放到 B 区"</code>
+                </div>
+                <div class="expand-hint" data-i18n="p1.expand">▾ 点击查看详情</div>
+            </div>
+
+            <!-- Case 11 -->
+            <div class="crystal-card" data-delay="240">
+                <div class="card-icon"><span class="icon-diamond icon-diamond-lg"></span></div>
+                <h4 data-i18n="p3.c11.title">智能桌面宠物机器人</h4>
+                <div class="card-brief" data-i18n="p3.c11.brief">100% AI 自主模块化编码，语音控制与 OLED 动态表情。</div>
+                <div class="card-detail" data-i18n-html="p3.c11.detail">
+                    全 AI 自主编码实现语音识别 + 蓝牙透传 + OLED 7 种动态表情随动作切换。模块化架构支持快速扩展新功能，桌面端的智能陪伴伙伴。
+                    <code data-i18n="p3.c11.code">特点：语音控制 · 蓝牙透传 · OLED 表情 · 自主导航</code>
+                </div>
+                <div class="expand-hint" data-i18n="p1.expand">▾ 点击查看详情</div>
+            </div>
+
+            <!-- Case 12 -->
+            <div class="crystal-card" data-delay="320">
+                <div class="card-icon"><span class="icon-diamond icon-diamond-lg"></span></div>
+                <h4 data-i18n="p3.c12.title">二维云台离线物体追踪</h4>
+                <div class="card-brief" data-i18n="p3.c12.brief">视觉相机 + STM32 离线追踪，无需联网低延迟锁定。</div>
+                <div class="card-detail" data-i18n-html="p3.c12.detail">
+                    视觉相机 + STM32 离线打造，无需任何云端 API。本地运行人脸/物体检测算法，双轴云台实时跟随锁定。低延迟、高精度、完全离线。
+                    <code data-i18n="p3.c12.code">特点：离线检测 · 双轴跟随 · 低延迟 · 高精度</code>
+                </div>
+                <div class="expand-hint" data-i18n="p1.expand">▾ 点击查看详情</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- COMPARISON TABLE -->
+<!-- ============================================================ -->
+<section id="comparison">
+    <div class="sec-inner">
+        <div style="text-align:center;margin-bottom:16px;">
+            <span class="sec-tag" data-i18n="cmp.tag">降维打击</span>
+            <h2 class="sec-title" data-i18n="cmp.title">AI Agent vs 传统物联网方案</h2>
+            <p class="sec-desc" style="margin:0 auto;" data-i18n="cmp.desc">直观对比具身工场 AI Agent 方案与传统开发模式在各维度的巨大优势。</p>
+        </div>
+
+        <div class="cmp-table-wrap" id="cmpTable">
+            <table class="cmp-table">
+                <thead>
+                    <tr>
+                        <th style="width:22%;" data-i18n="cmp.th1">对比维度</th>
+                        <th style="width:39%;" data-i18n="cmp.th2">具身工场 · AI Agent 方案</th>
+                        <th style="width:39%;" data-i18n="cmp.th3">传统物联网方案</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td data-i18n-html="cmp.r1.d"><span class="feature-icon"></span> 逻辑开发</td>
+                        <td data-i18n-html="cmp.r1.ai"><strong>聊天即定义：</strong>自然语言（中英文混合）描述功能需求，AI Agent 自动生成完整工程代码</td>
+                        <td data-i18n="cmp.r1.tra">手写 C/C++ 代码、翻阅数千页 Reference Manual 配置寄存器、手动编写 Makefile</td>
+                    </tr>
+                    <tr>
+                        <td data-i18n-html="cmp.r2.d"><span class="feature-icon"></span> 迭代周期</td>
+                        <td data-i18n-html="cmp.r2.ai"><strong>秒级闭环：</strong>修改描述 → AI 重生成 → 自动编译烧录 → 验证，平均 &lt;30 秒</td>
+                        <td data-i18n="cmp.r2.tra">手动改代码 → 编译（分钟级）→ 手动烧录 → 验证，单次迭代 5~15 分钟</td>
+                    </tr>
+                    <tr>
+                        <td data-i18n-html="cmp.r3.d"><span class="feature-icon"></span> 智能水平</td>
+                        <td data-i18n-html="cmp.r3.ai"><strong>自适应进化：</strong>AI 可根据上下文理解意图、自动匹配硬件模板、优化代码结构</td>
+                        <td data-i18n="cmp.r3.tra">固定规则逻辑，无法自动适配硬件变化或优化代码，完全依赖开发者经验</td>
+                    </tr>
+                    <tr>
+                        <td data-i18n-html="cmp.r4.d"><span class="feature-icon"></span> 学习门槛</td>
+                        <td data-i18n-html="cmp.r4.ai"><strong>零基础友好：</strong>无需掌握 ARM 架构、寄存器映射、时钟树配置，用自然语言即可开发硬件</td>
+                        <td data-i18n="cmp.r4.tra">需要掌握嵌入式系统、C 语言、电路基础、RTOS、调试工具等多领域知识</td>
+                    </tr>
+                    <tr>
+                        <td data-i18n-html="cmp.r5.d"><span class="feature-icon"></span> 调试排错</td>
+                        <td data-i18n-html="cmp.r5.ai"><strong>自动化自愈：</strong>编译错误或运行异常时，AI Agent 自动诊断并修复代码，重新编译烧录</td>
+                        <td data-i18n="cmp.r5.tra">人工分析串口日志、定位 Bug、修改代码、重新编译，循环往复直到修复</td>
+                    </tr>
+                    <tr>
+                        <td data-i18n-html="cmp.r6.d"><span class="feature-icon"></span> 教学效率</td>
+                        <td data-i18n-html="cmp.r6.ai"><strong>10 倍速教学：</strong>学生聚焦系统设计与创新思维，而非繁琐的配置与调试细节</td>
+                        <td data-i18n="cmp.r6.tra">70% 时间花费在环境搭建、工具链配置、寄存器查阅等非核心学习内容上</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align:center;margin-top:32px;">
+            <span style="display:inline-block;padding:12px 28px;border-radius:12px;background:linear-gradient(135deg,rgba(196,168,124,0.08),rgba(196,168,124,0.04));border:1px solid rgba(196,168,124,0.12);font-size:14px;color:var(--text-dim);" data-i18n-html="cmp.footer">
+                <strong style="color:var(--gold);">具身工场</strong> 不是要替代嵌入式工程师，而是让开发者的精力回归 <strong style="color:var(--gold);">系统设计与创新</strong> 本身
+            </span>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- FOOTER -->
+<!-- ============================================================ -->
+<footer>
+    <div style="max-width:600px;margin:0 auto 32px;">
+        <div class="slogan" data-i18n-html="footer.slogan">
+            "给机器注入<span class="glow">灵魂</span>，培养<span class="glow">极客</span>精神。"
+        </div>
+        <p style="font-size:13px;color:var(--text-dim);line-height:1.8;" data-i18n-html="footer.desc">
+            从自然语言到硬件运行，让 AI 拥有物理躯体。<br>
+            基于 AI Agent 的嵌入式开发实践教学平台。
+        </p>
+    </div>
+    <p class="copy" data-i18n-html="footer.copy">
+        Copyright © 2026 <strong>具身工场</strong> (Embodied-Ai-Factory). All Rights Reserved.
+    </p>
+</footer>
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT -->
+<!-- ============================================================ -->
+<script>
+// ===== i18n Translation Data =====
+const i18n = {
+    zh: {
+        'pageTitle': '具身工场 | Embodied-Ai-Factory — 给机器注入灵魂，培养极客精神',
+        'nav.home': '工场首页',
+        'nav.arch': '总架构原理',
+        'nav.p1': '教学基石',
+        'nav.p2': '全栈协同',
+        'nav.p3': '高级具身',
+        'nav.cmp': '对比分析',
+        'hero.badge': '具身工场 · 基于 AI Agent 的嵌入式开发实践教学平台',
+        'hero.title1': '欢迎来到',
+        'hero.title2': '具身工场',
+        'hero.sub': '<strong>从自然语言到硬件运行</strong> —— 体验 AI Coding 带来的物理世界秒级快速迭代。<br>智能硬件的极速构建引擎，让 AI 不再只是屏幕里的对话，而是拥有物理躯体的智能。',
+        'hero.cta': '开启具身之旅',
+        'hero.sec': '浏览教学案例',
+        'arch.tag': '总架构原理',
+        'arch.title': '三层一闭环 · 具身工场技术架构',
+        'arch.desc': '从对话交互到底层硬件执行，贯穿全栈的 Self-Healing 自愈闭环。',
+        'arch.arrow': '⬇',
+        'arch.l1.badge': 'L1 · 对话交互层',
+        'arch.l1.title': 'Conversational Layer',
+        'arch.l1.desc': '用户在工场终端中以自然语言描述功能需求，如"点亮三盏 LED 流水灯"或"读取温湿度传感器数据"。系统内置动态打字机效果实时回显，支持中英文混合指令解析。',
+        'arch.l1.t1': '自然语言',
+        'arch.l1.t2': '意图识别',
+        'arch.l1.t3': '上下文感知',
+        'arch.l2.badge': 'L2 · AI 处理层',
+        'arch.l2.title': 'AI Processing Layer',
+        'arch.l2.desc': 'AI Agent 接收自然语言指令，基于知识库匹配硬件模板，自动生成规范化的 C / C++ 源代码。内置代码审查机制，确保寄存器配置、引脚映射、时钟树初始化的正确性。',
+        'arch.l2.t1': 'AI Agent',
+        'arch.l2.t2': '代码生成',
+        'arch.l2.t3': '静态分析',
+        'arch.l2.t4': '模板引擎',
+        'arch.l3.badge': 'L3 · 编译部署层',
+        'arch.l3.title': 'Build & Deployment Layer',
+        'arch.l3.desc': '运行于 Linux 宿主环境（香橙派）之上，调用 ARM-GCC 工具链自动编译源码，生成 Hex/Bin 二进制固件，并通过 ST-Link 调试器自动烧录至目标硬件。全过程无需人工干预，秒级完成。',
+        'arch.l3.t1': 'ARM-GCC',
+        'arch.l3.t2': 'ST-Link',
+        'arch.l3.t3': 'Orange Pi',
+        'arch.l3.t4': 'Makefile',
+        'arch.l4.badge': 'L4 · 硬件执行层',
+        'arch.l4.title': 'Hardware Execution Layer',
+        'arch.l4.desc': 'STM32 底层硬件接收固件并执行：GPIO 控制、PWM 输出、ADC 采样、I²C/SPI/UART 通信……物理世界与数字代码在此交汇，实现真正的"具身智能"。',
+        'arch.l4.t1': 'STM32',
+        'arch.l4.t2': 'GPIO/PWM',
+        'arch.l4.t3': 'I²C/SPI',
+        'arch.l4.t4': 'FreeRTOS',
+        'arch.beam': '串口日志 / 报错修复<br><span class="hl">自愈闭环</span>',
+        'arch.loop.title': 'Self-Healing 自愈闭环',
+        'arch.loop.desc': '当编译出错或硬件运行异常时，串口日志实时回传至 AI Agent。Agent 自动诊断错误根源，修正代码并触发重新编译-烧录循环，直至硬件按预期运行。全程无需人工介入，实现开发闭环自治。',
+        'arch.loop.b1': '● 编译',
+        'arch.loop.b2': '● 烧录',
+        'arch.loop.b3': '● 验证',
+        'p1.tag': '第一阶段',
+        'p1.title': '教学基石 · 原子级智能硬件',
+        'p1.desc': '四大经典入门案例，覆盖显示、灯光、色彩与运动控制，让 AI Coding 从第一行代码开始。',
+        'p1.expand': '▾ 点击查看详情',
+        'p1.collapse': '▴ 收起',
+        'p1.c1.title': 'OLED 显示屏',
+        'p1.c1.brief': 'AI 自动计算字高留白与 page 布局，满屏显示。',
+        'p1.c1.detail': '输入自然语言提示词，AI 自动配置 SSD1306 I²C 驱动，动态计算字体高度与行间距，实现整屏无溢出排版。支持中英文混排与自定义图形。<code>提示词："点亮 OLED，居中显示 \'Hello World\'"</code>',
+        'p1.c1.code': '提示词："点亮 OLED，居中显示 \'Hello World\'"',
+        'p1.c2.title': '极速流水灯',
+        'p1.c2.brief': '5颗 LED 单方向快速循环跑马灯，秒级编译烧录运行。',
+        'p1.c2.detail': '利用 GPIO 位带操作实现纳秒级翻转，5 颗 LED 以流水灯形式快速循环。AI Agent 自动生成延时计算与循环逻辑，体验秒级从文本到物理光的转换。<code>提示词："5 颗 LED 流水灯，每颗亮 200ms"</code>',
+        'p1.c2.code': '提示词："5 颗 LED 流水灯，每颗亮 200ms"',
+        'p1.c3.title': '三色 LED 七彩渐变',
+        'p1.c3.brief': '基于 HSV 色彩空间算法，实现 11 秒七彩呼吸渐变。',
+        'p1.c3.detail': 'AI 自动创建子目录存储多版本代码，基于 HSV 色彩空间生成 PWM 控制算法，11 秒完成从红到紫的完整渐变周期，呼吸效果平滑自然。<code>提示词："RGB LED 七彩渐变呼吸，周期 11 秒"</code>',
+        'p1.c3.code': '提示词："RGB LED 七彩渐变呼吸，周期 11 秒"',
+        'p1.c4.title': '舵机双算法运转对比',
+        'p1.c4.brief': '线性运动 vs 正弦缓动算法，特性对比一目了然。',
+        'p1.c4.detail': 'AI 同时生成两份代码：<strong>线性匀速运动</strong>（启停有冲击）与<strong>正弦缓动算法</strong>（平滑自然、减速停止）。通过对比表格直观展示两种算法的角速度与力矩差异。<code>提示词："舵机从 0° 转到 180°，对比线性与正弦算法"</code>',
+        'p1.c4.code': '提示词："舵机从 0° 转到 180°，对比线性与正弦算法"',
+        'p2.tag': '第二阶段',
+        'p2.title': '全栈多端 · 复杂系统协同开发',
+        'p2.desc': '从嵌入式硬件到 Web 前端，全面打通全栈构建与多端交互。',
+        'p2.c5.title': '具身工场灵感器',
+        'p2.c5.tagline': '96KB RAM 极限挑战 · 3D 渲染引擎',
+        'p2.c5.desc': '挑战 STM32 96KB RAM 极限内存，通过局部刷新跑通流畅的 3D 圆柱滚动菜单与旋转地球仪。嵌入式端 3D 渲染的里程碑式突破。',
+        'p2.c5.mtitle': '具身工场灵感器 · 解说端',
+        'p2.c5.ph5': '灵感器解说站',
+        'p2.c5.pp': '3D 圆柱滚动菜单 · 旋转地球 · 96KB RAM 极限渲染<br>通过 Web Bluetooth 与实体硬件实时同步',
+        'p2.c5.pt1': '● 3D 引擎',
+        'p2.c5.pt2': '● 局部刷新',
+        'p2.c5.pt3': '● BLE 桥接',
+        'p2.c5.note': '<span>深度融合交互 · 下方 iframe 嵌入解说端</span><a href="https://6a13385508f970149d95842c--playful-hamster-41383e.netlify.app/" target="_blank" rel="noopener">↗ 全屏打开解说站</a>',
+        'p2.c5.link': '↗ 全屏打开解说站',
+        'p2.c6.title': 'STM32 智慧农场生态系统',
+        'p2.c6.tagline': 'FreeRTOS 多任务 · Web 蓝牙仪表盘',
+        'p2.c6.desc': 'Claude Code 快速搭建 FreeRTOS 多任务框架，Workbuddy 极速生成现代化 Web 蓝牙控制仪表盘。传感器数据采集 → 逻辑判断 → 执行器控制的完整闭环。',
+        'p2.c6.mtitle': '智慧农场 · Web 控制台',
+        'p2.c6.note': '<span>支持 <strong style="color:var(--gold);">Web Bluetooth API</strong> 实时配对，现场点击即可直接控制实体硬件</span><a href="https://lai-jia-ming.github.io/smart-farm/" target="_blank" rel="noopener">↗ 独立全屏打开控制台</a>',
+        'p2.c6.link': '↗ 独立全屏打开控制台',
+        'p2.c6.tag1': 'Web Bluetooth',
+        'p2.c6.tag2': '仪表盘',
+        'p2.c7.title': '经典复古游戏合集',
+        'p2.c7.tagline': '飞书发消息即可生成 · Agent 自动烧录',
+        'p2.c7.desc': '支持通过<strong style="color:var(--gold);">飞书</strong>发送游戏逻辑提示词，本地 Agent 自动生成贪吃蛇、俄罗斯方块、王牌飞行员游戏的动态 C 代码并自动烧录至 STM32 硬件运行。聊天即开发，游戏秒级生成。',
+        'p2.c7.h1': '<strong>贪吃蛇</strong> — AI 自动实现链表蛇身、碰撞检测、分数系统',
+        'p2.c7.h2': '<strong>俄罗斯方块</strong> — 旋转、消行、七种方块随机生成',
+        'p2.c7.h3': '<strong>王牌飞行员</strong> — 基于物理引擎的纵版射击游戏',
+        'p2.c7.tag1': '飞书集成',
+        'p2.c7.tag2': 'AI 生成',
+        'p2.c7.tag3': '自动烧录',
+        'p3.tag': '第三阶段',
+        'p3.title': '巅峰具身 · Agent 闭环与边缘自治',
+        'p3.desc': '打通飞书 Agent 闭环，聊天即开发、控制真实物理世界，实现真正的边缘自治。',
+        'p3.c8.title': 'AI 自动控制流水线电机',
+        'p3.c8.brief': '飞书发送转速指令，端到端自动编译烧录，物理电机即时响应。',
+        'p3.c8.detail': 'Nanobot 智能体接收飞书消息中的<strong>自然语言转速指令</strong>，自动计算 PWM 占空比参数，触发 GCC 编译 → ST-Link 烧录闭环。物理电机转速即时变化，端到端延时小于 30 秒。<code>飞书指令："电机转速设为 1200 RPM"</code>',
+        'p3.c8.code': '飞书指令："电机转速设为 1200 RPM"',
+        'p3.c9.title': 'PID 倒立摆套件 · 飞书具身控制版',
+        'p3.c9.brief': '双环串级 PID + 飞书远程控制，专家级知识库加持。',
+        'p3.c9.detail': '接入双环串级 PID 专家级知识库（角度环 + 位置环），通过飞书即可远程启动倒立摆平衡控制、设定旋转圈数与目标角度。AI Agent 自动整定 PID 参数。<code>飞书指令："倒立摆启动，旋转 3 圈后回正"</code>',
+        'p3.c9.code': '飞书指令："倒立摆启动，旋转 3 圈后回正"',
+        'p3.c10.title': 'AI Agent 机械臂开发实践',
+        'p3.c10.brief': '自动实现动作逻辑、手势跟随与精准抓取。',
+        'p3.c10.detail': 'AI Agent 自动生成多关节机械臂的运动学算法：手势识别 → 坐标映射 → 逆运动学解算 → PWM 输出。支持预设动作序列与实时手势跟随抓取。<code>提示词："机械臂跟随手势，抓取物体后放到 B 区"</code>',
+        'p3.c10.code': '提示词："机械臂跟随手势，抓取物体后放到 B 区"',
+        'p3.c11.title': '智能桌面宠物机器人',
+        'p3.c11.brief': '100% AI 自主模块化编码，语音控制与 OLED 动态表情。',
+        'p3.c11.detail': '全 AI 自主编码实现语音识别 + 蓝牙透传 + OLED 7 种动态表情随动作切换。模块化架构支持快速扩展新功能，桌面端的智能陪伴伙伴。<code>特点：语音控制 · 蓝牙透传 · OLED 表情 · 自主导航</code>',
+        'p3.c11.code': '特点：语音控制 · 蓝牙透传 · OLED 表情 · 自主导航',
+        'p3.c12.title': '二维云台离线物体追踪',
+        'p3.c12.brief': '视觉相机 + STM32 离线追踪，无需联网低延迟锁定。',
+        'p3.c12.detail': '视觉相机 + STM32 离线打造，无需任何云端 API。本地运行人脸/物体检测算法，双轴云台实时跟随锁定。低延迟、高精度、完全离线。<code>特点：离线检测 · 双轴跟随 · 低延迟 · 高精度</code>',
+        'p3.c12.code': '特点：离线检测 · 双轴跟随 · 低延迟 · 高精度',
+        'cmp.tag': '降维打击',
+        'cmp.title': 'AI Agent vs 传统物联网方案',
+        'cmp.desc': '直观对比具身工场 AI Agent 方案与传统开发模式在各维度的巨大优势。',
+        'cmp.th1': '对比维度',
+        'cmp.th2': '具身工场 · AI Agent 方案',
+        'cmp.th3': '传统物联网方案',
+        'cmp.r1.d': '<span class="feature-icon"></span> 逻辑开发',
+        'cmp.r1.ai': '<strong>聊天即定义：</strong>自然语言（中英文混合）描述功能需求，AI Agent 自动生成完整工程代码',
+        'cmp.r1.tra': '手写 C/C++ 代码、翻阅数千页 Reference Manual 配置寄存器、手动编写 Makefile',
+        'cmp.r2.d': '<span class="feature-icon"></span> 迭代周期',
+        'cmp.r2.ai': '<strong>秒级闭环：</strong>修改描述 → AI 重生成 → 自动编译烧录 → 验证，平均 &lt;30 秒',
+        'cmp.r2.tra': '手动改代码 → 编译（分钟级）→ 手动烧录 → 验证，单次迭代 5~15 分钟',
+        'cmp.r3.d': '<span class="feature-icon"></span> 智能水平',
+        'cmp.r3.ai': '<strong>自适应进化：</strong>AI 可根据上下文理解意图、自动匹配硬件模板、优化代码结构',
+        'cmp.r3.tra': '固定规则逻辑，无法自动适配硬件变化或优化代码，完全依赖开发者经验',
+        'cmp.r4.d': '<span class="feature-icon"></span> 学习门槛',
+        'cmp.r4.ai': '<strong>零基础友好：</strong>无需掌握 ARM 架构、寄存器映射、时钟树配置，用自然语言即可开发硬件',
+        'cmp.r4.tra': '需要掌握嵌入式系统、C 语言、电路基础、RTOS、调试工具等多领域知识',
+        'cmp.r5.d': '<span class="feature-icon"></span> 调试排错',
+        'cmp.r5.ai': '<strong>自动化自愈：</strong>编译错误或运行异常时，AI Agent 自动诊断并修复代码，重新编译烧录',
+        'cmp.r5.tra': '人工分析串口日志、定位 Bug、修改代码、重新编译，循环往复直到修复',
+        'cmp.r6.d': '<span class="feature-icon"></span> 教学效率',
+        'cmp.r6.ai': '<strong>10 倍速教学：</strong>学生聚焦系统设计与创新思维，而非繁琐的配置与调试细节',
+        'cmp.r6.tra': '70% 时间花费在环境搭建、工具链配置、寄存器查阅等非核心学习内容上',
+        'cmp.footer': '<strong style="color:var(--gold);">具身工场</strong> 不是要替代嵌入式工程师，而是让开发者的精力回归 <strong style="color:var(--gold);">系统设计与创新</strong> 本身',
+        'footer.slogan': '"给机器注入<span class="glow">灵魂</span>，培养<span class="glow">极客</span>精神。"',
+        'footer.desc': '从自然语言到硬件运行，让 AI 拥有物理躯体。<br>基于 AI Agent 的嵌入式开发实践教学平台。',
+        'footer.copy': 'Copyright © 2026 <strong>具身工场</strong> (Embodied-Ai-Factory). All Rights Reserved.',
+    },
+    en: {
+        'pageTitle': 'Embodied-Ai-Factory | Infusing Soul into Machines, Cultivating Geek Spirit',
+        'nav.home': 'Home',
+        'nav.arch': 'Architecture',
+        'nav.p1': 'Foundation',
+        'nav.p2': 'Full-Stack',
+        'nav.p3': 'Advanced',
+        'nav.cmp': 'Comparison',
+        'hero.badge': 'Embodied-Ai-Factory · AI Agent Powered Embedded Development Teaching Platform',
+        'hero.title1': 'Welcome to',
+        'hero.title2': 'Embodied-Ai-Factory',
+        'hero.sub': '<strong>From Natural Language to Hardware Execution</strong> — Experience seconds-level rapid iteration of the physical world with AI Coding.<br>The ultimate rapid prototyping engine for intelligent hardware, where AI transcends the screen to gain a physical body.',
+        'hero.cta': 'Start the Journey',
+        'hero.sec': 'Browse Cases',
+        'arch.tag': 'Core Architecture',
+        'arch.title': 'Three Layers, One Closed Loop — Technical Architecture',
+        'arch.desc': 'From conversational interaction to hardware execution — a full-stack Self-Healing closed loop.',
+        'arch.arrow': '⬇',
+        'arch.l1.badge': 'L1 · Conversational Layer',
+        'arch.l1.title': 'Conversational Layer',
+        'arch.l1.desc': 'Users describe functional requirements in natural language at the workshop terminal, e.g. "light up 3 LEDs in sequence" or "read temperature and humidity sensor data". The system features real-time typewriter echo and supports mixed Chinese/English instruction parsing.',
+        'arch.l1.t1': 'NLP',
+        'arch.l1.t2': 'Intent Recognition',
+        'arch.l1.t3': 'Context Aware',
+        'arch.l2.badge': 'L2 · AI Processing Layer',
+        'arch.l2.title': 'AI Processing Layer',
+        'arch.l2.desc': 'AI Agent receives natural language instructions, matches hardware templates from its knowledge base, and automatically generates standardized C / C++ source code. Built-in code review ensures correct register configuration, pin mapping, and clock tree initialization.',
+        'arch.l2.t1': 'AI Agent',
+        'arch.l2.t2': 'Code Gen',
+        'arch.l2.t3': 'Static Analysis',
+        'arch.l2.t4': 'Template Engine',
+        'arch.l3.badge': 'L3 · Build & Deployment Layer',
+        'arch.l3.title': 'Build & Deployment Layer',
+        'arch.l3.desc': 'Runs on Linux host (Orange Pi), invoking the ARM-GCC toolchain for automatic compilation, producing Hex/Bin firmware binaries, and auto-flashing via ST-Link debugger to the target hardware. No manual intervention needed — completes in seconds.',
+        'arch.l3.t1': 'ARM-GCC',
+        'arch.l3.t2': 'ST-Link',
+        'arch.l3.t3': 'Orange Pi',
+        'arch.l3.t4': 'Makefile',
+        'arch.l4.badge': 'L4 · Hardware Execution Layer',
+        'arch.l4.title': 'Hardware Execution Layer',
+        'arch.l4.desc': 'STM32 hardware receives and executes firmware: GPIO control, PWM output, ADC sampling, I²C/SPI/UART communication… where the physical world and digital code converge for true "embodied intelligence."',
+        'arch.l4.t1': 'STM32',
+        'arch.l4.t2': 'GPIO/PWM',
+        'arch.l4.t3': 'I²C/SPI',
+        'arch.l4.t4': 'FreeRTOS',
+        'arch.beam': 'Serial Log / Error Fix<br><span class="hl">Self-Healing Loop</span>',
+        'arch.loop.title': 'Self-Healing Closed Loop',
+        'arch.loop.desc': 'When compilation fails or hardware behaves abnormally, serial logs stream back to the AI Agent in real time. The Agent automatically diagnoses the root cause, fixes the code, and triggers a recompile-flash cycle until the hardware runs as expected. Zero manual intervention — fully autonomous development loop.',
+        'arch.loop.b1': '● Compile',
+        'arch.loop.b2': '● Flash',
+        'arch.loop.b3': '● Verify',
+        'p1.tag': 'Phase 1',
+        'p1.title': 'Foundation · Atomic Intelligent Hardware',
+        'p1.desc': 'Four classic introductory cases covering display, lighting, color, and motion control — AI Coding starts from the very first line of code.',
+        'p1.expand': '▾ Click to expand',
+        'p1.collapse': '▴ Collapse',
+        'p1.c1.title': 'OLED Display',
+        'p1.c1.brief': 'AI auto-calculates font height, margins, and page layout for full-screen rendering.',
+        'p1.c1.detail': 'Input natural language prompts, AI auto-configures the SSD1306 I²C driver, dynamically computes font height and line spacing for overflow-free full-screen layout. Supports mixed Chinese/English text and custom graphics.<code>Prompt: "Initialize OLED, center \'Hello World\'"</code>',
+        'p1.c1.code': 'Prompt: "Initialize OLED, center \'Hello World\'"',
+        'p1.c2.title': 'Fast LED Chaser',
+        'p1.c2.brief': '5 LEDs in one-direction rapid chaser pattern — compile, flash, run in seconds.',
+        'p1.c2.detail': 'Uses GPIO bit-band operations for nanosecond-level toggling. 5 LEDs cycle rapidly in a chaser pattern. AI Agent auto-generates delay calculations and loop logic — experience text-to-physical-light conversion in seconds.<code>Prompt: "5-LED chaser, each on for 200ms"</code>',
+        'p1.c2.code': 'Prompt: "5-LED chaser, each on for 200ms"',
+        'p1.c3.title': 'RGB LED Rainbow Gradient',
+        'p1.c3.brief': 'HSV color-space algorithm produces an 11-second rainbow breathing cycle.',
+        'p1.c3.detail': 'AI auto-creates subdirectories for multi-version code, generates PWM control based on HSV color space. Completes a full rainbow cycle from red to violet in 11 seconds with smooth, natural breathing.<code>Prompt: "RGB LED rainbow breathing, 11s cycle"</code>',
+        'p1.c3.code': 'Prompt: "RGB LED rainbow breathing, 11s cycle"',
+        'p1.c4.title': 'Servo Dual-Algorithm Comparison',
+        'p1.c4.brief': 'Linear motion vs. sine easing — clear side-by-side comparison.',
+        'p1.c4.detail': 'AI generates two code variants simultaneously: <strong>linear constant-speed motion</strong> (jerky starts/stops) vs. <strong>sine easing algorithm</strong> (smooth, natural deceleration). A comparison table visualizes angular velocity and torque differences.<code>Prompt: "Servo 0° to 180°, compare linear vs sine"</code>',
+        'p1.c4.code': 'Prompt: "Servo 0° to 180°, compare linear vs sine"',
+        'p2.tag': 'Phase 2',
+        'p2.title': 'Full-Stack · Complex System Co-Development',
+        'p2.desc': 'From embedded hardware to Web frontend — bridging full-stack construction and multi-platform interaction.',
+        'p2.c5.title': 'Embodied Inspirer',
+        'p2.c5.tagline': '96KB RAM Limit Challenge · 3D Rendering Engine',
+        'p2.c5.desc': 'Pushes the STM32 96KB RAM to its limits, achieving smooth 3D cylindrical scrolling menus and a rotating globe through partial screen refresh. A milestone in embedded 3D rendering.',
+        'p2.c5.mtitle': 'Embodied Inspirer · Guide',
+        'p2.c5.ph5': 'Inspirer Guide',
+        'p2.c5.pp': '3D Cylindrical Menu · Rotating Globe · 96KB RAM<br>Real-time sync with physical hardware via Web Bluetooth',
+        'p2.c5.pt1': '● 3D Engine',
+        'p2.c5.pt2': '● Partial Refresh',
+        'p2.c5.pt3': '● BLE Bridge',
+        'p2.c5.note': '<span>Deep interactive integration · iframe embedded below</span><a href="https://6a13385508f970149d95842c--playful-hamster-41383e.netlify.app/" target="_blank" rel="noopener">↗ Open Fullscreen</a>',
+        'p2.c5.link': '↗ Open Fullscreen',
+        'p2.c6.title': 'STM32 Smart Farm Ecosystem',
+        'p2.c6.tagline': 'FreeRTOS Multi-Tasking · Web Bluetooth Dashboard',
+        'p2.c6.desc': 'Claude Code rapidly builds a FreeRTOS multi-tasking framework; Workbuddy generates a modern Web Bluetooth control dashboard. Complete closed loop: sensor data → logic → actuator control.',
+        'p2.c6.mtitle': 'Smart Farm · Web Console',
+        'p2.c6.note': '<span>Supports <strong style="color:var(--gold);">Web Bluetooth API</strong> for real-time pairing — click to control physical hardware on site</span><a href="https://lai-jia-ming.github.io/smart-farm/" target="_blank" rel="noopener">↗ Open Fullscreen Console</a>',
+        'p2.c6.link': '↗ Open Fullscreen Console',
+        'p2.c6.tag1': 'Web Bluetooth',
+        'p2.c6.tag2': 'Dashboard',
+        'p2.c7.title': 'Classic Retro Game Collection',
+        'p2.c7.tagline': 'Feishu msg → Game generated · Agent auto-flash',
+        'p2.c7.desc': 'Send game logic prompts via <strong style="color:var(--gold);">Feishu/Lark</strong>, and the local Agent automatically generates dynamic C code for Snake, Tetris, and Ace Pilot — then auto-flashes to STM32 hardware. Chat-is-development, games generated in seconds.',
+        'p2.c7.h1': '<strong>Snake</strong> — AI implements linked-list body, collision detection, scoring',
+        'p2.c7.h2': '<strong>Tetris</strong> — Rotation, line clear, 7-block random generation',
+        'p2.c7.h3': '<strong>Ace Pilot</strong> — Physics-based vertical scrolling shooter',
+        'p2.c7.tag1': 'Feishu/Lark',
+        'p2.c7.tag2': 'AI Gen',
+        'p2.c7.tag3': 'Auto-Flash',
+        'p3.tag': 'Phase 3',
+        'p3.title': 'Peak Embodiment · Agent Loop & Edge Autonomy',
+        'p3.desc': 'Bridging the Feishu Agent closed loop — chat-is-development, control the real physical world, achieve true edge autonomy.',
+        'p3.c8.title': 'AI Auto-Controlled Conveyor Motor',
+        'p3.c8.brief': 'Send RPM command via Feishu — end-to-end auto compile & flash, motor responds instantly.',
+        'p3.c8.detail': 'Nanobot agent receives <strong>natural language RPM commands</strong> from Feishu, auto-calculates PWM duty cycle, triggers GCC compile → ST-Link flash loop. Motor speed changes in real time, end-to-end latency under 30 seconds.<code>Feishu cmd: "Set motor speed to 1200 RPM"</code>',
+        'p3.c8.code': 'Feishu cmd: "Set motor speed to 1200 RPM"',
+        'p3.c9.title': 'PID Inverted Pendulum · Feishu Control Edition',
+        'p3.c9.brief': 'Dual-loop cascade PID + remote Feishu control, expert knowledge base.',
+        'p3.c9.detail': 'Integrates dual-loop cascade PID expert knowledge base (angle loop + position loop). Start/stop pendulum balance, set rotation count and target angle remotely via Feishu. AI Agent auto-tunes PID parameters.<code>Feishu cmd: "Start pendulum, rotate 3 times then return"</code>',
+        'p3.c9.code': 'Feishu cmd: "Start pendulum, rotate 3 times then return"',
+        'p3.c10.title': 'AI Agent Robotic Arm',
+        'p3.c10.brief': 'Auto-generates motion logic, gesture following, and precision grasping.',
+        'p3.c10.detail': 'AI Agent auto-generates multi-joint inverse kinematics: gesture recognition → coordinate mapping → inverse kinematics → PWM output. Supports preset motion sequences and real-time gesture following.<code>Prompt: "Arm follows hand gesture, pick up object and place in zone B"</code>',
+        'p3.c10.code': 'Prompt: "Arm follows hand gesture, pick up object and place in zone B"',
+        'p3.c11.title': 'Smart Desktop Pet Robot',
+        'p3.c11.brief': '100% AI autonomous modular coding — voice control, BLE, OLED dynamic expressions.',
+        'p3.c11.detail': 'Fully AI-coded: voice recognition + BLE passthrough + 7 dynamic OLED expressions that change with actions. Modular architecture allows rapid new feature expansion.<code>Features: Voice · BLE · OLED · Auto-navigation</code>',
+        'p3.c11.code': 'Features: Voice · BLE · OLED · Auto-navigation',
+        'p3.c12.title': '2-Axis Offline Object Tracking',
+        'p3.c12.brief': 'Camera + STM32 offline tracking — no internet needed, low latency.',
+        'p3.c12.detail': 'Built entirely offline with camera + STM32, no cloud APIs required. Runs face/object detection locally, dual-axis gimbal follows in real time. Low latency, high precision, fully offline.<code>Features: Offline · Dual-axis · Low latency · High precision</code>',
+        'p3.c12.code': 'Features: Offline · Dual-axis · Low latency · High precision',
+        'cmp.tag': 'Comparison',
+        'cmp.title': 'AI Agent vs. Traditional IoT',
+        'cmp.desc': 'See the overwhelming advantages of the Embodied-Ai-Factory AI Agent approach across every dimension compared to traditional development.',
+        'cmp.th1': 'Dimension',
+        'cmp.th2': 'Embodied-Ai-Factory · AI Agent',
+        'cmp.th3': 'Traditional IoT',
+        'cmp.r1.d': '<span class="feature-icon"></span> Logic Dev',
+        'cmp.r1.ai': '<strong>Chat-as-Define:</strong> Describe requirements in natural language, AI Agent auto-generates complete projects',
+        'cmp.r1.tra': 'Hand-write C/C++, flip through thousands of pages of Reference Manual, manually write Makefiles',
+        'cmp.r2.d': '<span class="feature-icon"></span> Iteration Speed',
+        'cmp.r2.ai': '<strong>Seconds-level Loop:</strong> Edit description → AI regenerates → auto compile/flash → verify, avg &lt;30s',
+        'cmp.r2.tra': 'Manual code edit → compile (minutes) → manual flash → verify, 5~15 min per iteration',
+        'cmp.r3.d': '<span class="feature-icon"></span> Intelligence',
+        'cmp.r3.ai': '<strong>Adaptive Evolution:</strong> AI understands intent from context, auto-matches hardware templates, optimizes code',
+        'cmp.r3.tra': 'Fixed logic rules, cannot adapt to hardware changes, fully dependent on developer experience',
+        'cmp.r4.d': '<span class="feature-icon"></span> Learning Curve',
+        'cmp.r4.ai': '<strong>Beginner-Friendly:</strong> No need to learn ARM architecture, register maps, or clock trees — use natural language',
+        'cmp.r4.tra': 'Requires embedded systems, C language, electronics, RTOS, debugging tools — broad expertise needed',
+        'cmp.r5.d': '<span class="feature-icon"></span> Debugging',
+        'cmp.r5.ai': '<strong>Auto- Healing:</strong> AI Agent diagnoses errors, fixes code, triggers recompile-flash automatically',
+        'cmp.r5.tra': 'Manually analyze serial logs, locate bugs, edit code, recompile — repeat cycle until fixed',
+        'cmp.r6.d': '<span class="feature-icon"></span> Teaching Efficiency',
+        'cmp.r6.ai': '<strong>10× Faster Teaching:</strong> Students focus on system design and innovation, not tedious configuration',
+        'cmp.r6.tra': '70% of time spent on environment setup, toolchain config, register lookups — non-core learning',
+        'cmp.footer': '<strong style="color:var(--gold);">Embodied-Ai-Factory</strong> doesn\'t replace embedded engineers — it frees developers to focus on <strong style="color:var(--gold);">system design & innovation</strong>',
+        'footer.slogan': '"Infuse <span class="glow">soul</span> into machines, cultivate <span class="glow">geek</span> spirit."',
+        'footer.desc': 'From natural language to hardware execution — giving AI a physical body.<br>AI Agent powered embedded development teaching platform.',
+        'footer.copy': 'Copyright © 2026 <strong>Embodied-Ai-Factory</strong>. All Rights Reserved.',
+    }
+};
+
+// ===== Language Switching =====
+let currentLang = localStorage.getItem('ef_lang') || 'zh';
+
+function applyLang(lang) {
+    const data = i18n[lang];
+    if (!data) return;
+
+    // Page title
+    if (data['pageTitle']) document.title = data['pageTitle'];
+
+    // data-i18n elements (textContent replacement)
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (data[key] !== undefined) {
+            el.textContent = data[key];
+        }
+    });
+
+    // data-i18n-html elements (innerHTML replacement)
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const key = el.dataset.i18nHtml;
+        if (data[key] !== undefined) {
+            el.innerHTML = data[key];
+        }
+    });
+
+    // Body class for font switching
+    document.body.classList.toggle('lang-en', lang === 'en');
+
+    // Toggle button: switch active/inactive classes
+    const zhSpan = document.getElementById('langZh');
+    const enSpan = document.getElementById('langEn');
+    if (zhSpan && enSpan) {
+        if (lang === 'zh') {
+            zhSpan.className = 'active-lang';
+            enSpan.className = 'inactive-lang';
+        } else {
+            zhSpan.className = 'inactive-lang';
+            enSpan.className = 'active-lang';
+        }
+    }
+
+    // HTML lang attribute
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+
+    // Store preference
+    localStorage.setItem('ef_lang', lang);
+    currentLang = lang;
+}
+
+function switchLang() {
+    const next = currentLang === 'zh' ? 'en' : 'zh';
+    applyLang(next);
+}
+
+// Apply saved language on load
+document.addEventListener('DOMContentLoaded', () => {
+    applyLang(currentLang);
+    // Hero stagger entrance
+    setTimeout(() => {
+        document.querySelectorAll('.hero-stagger').forEach(el => el.classList.add('in'));
+    }, 100);
+});
+
+// ===== Navbar =====
+const nav = document.getElementById('navbar');
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('navLinks');
+
+window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+    const sections = document.querySelectorAll('section[id]');
+    let current = 'hero';
+    sections.forEach(sec => { const top = sec.offsetTop - 150; if (window.scrollY >= top) current = sec.id; });
+    document.querySelectorAll('.nav-links a').forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+});
+
+if (hamburger) {
+    hamburger.addEventListener('click', () => { navLinks.classList.toggle('open'); });
+    navLinks.querySelectorAll('a').forEach(a => { a.addEventListener('click', () => navLinks.classList.remove('open')); });
+}
+
+// ===== Scroll-triggered Visibility =====
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const el = entry.target;
+            const delay = parseInt(el.dataset.delay) || 0;
+            setTimeout(() => el.classList.add('visible'), delay);
+            observer.unobserve(el);
+        }
+    });
+}, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
+
+document.querySelectorAll('.crystal-card, .project-card').forEach(el => observer.observe(el));
+document.querySelectorAll('.arch-layer-z, .arch-z-connector, .arch-z-loop').forEach(el => observer.observe(el));
+const cmpTable = document.getElementById('cmpTable');
+if (cmpTable) observer.observe(cmpTable);
+const loopNote = document.getElementById('loopNote');
+if (loopNote) observer.observe(loopNote);
+
+// Table rows staggered entrance
+const tableObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            document.querySelectorAll('.cmp-table tbody tr').forEach((tr, i) => {
+                setTimeout(() => tr.classList.add('in'), 100 + i * 80);
+            });
+            tableObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.15 });
+const cmpWrap = document.querySelector('.cmp-table-wrap');
+if (cmpWrap) tableObserver.observe(cmpWrap);
+
+// Footer entrance
+const footerObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            document.querySelector('footer').classList.add('in');
+            footerObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.15 });
+const footerEl = document.querySelector('footer');
+if (footerEl) footerObserver.observe(footerEl);
+
+// ===== Card Expand/Collapse =====
+document.querySelectorAll('.crystal-card').forEach(card => {
+    const detail = card.querySelector('.card-detail');
+    const hint = card.querySelector('.expand-hint');
+    if (!detail) return;
+    card.addEventListener('click', () => {
+        const isOpen = detail.classList.contains('open');
+        detail.classList.toggle('open');
+        if (hint) {
+            const key = hint.dataset.i18n;
+            const collapseKey = 'p1.collapse';
+            if (key) {
+                hint.textContent = isOpen ? i18n[currentLang][collapseKey] : i18n[currentLang][key];
+            }
+        }
+    });
+});
+
+// ===== Smooth scroll =====
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+});
+
+// ===== Console Easter Egg =====
+console.log('%c🦅 具身工场 | Embodied-Ai-Factory', 'font-size:24px;font-weight:bold;color:#C4A87C');
+console.log('%c给机器注入灵魂，培养极客精神。', 'font-size:14px;color:#C4A87C');
+console.log('%c🔧 基于 AI Agent 的嵌入式开发实践教学平台', 'font-size:12px;color:#94A3B8');
+
+// ===== Glass Sphere Mouse Parallax =====
+(function() {
+    const spheres = document.querySelectorAll('.hero-bg-sphere');
+    if (!spheres.length) return;
+    let mx = 0.5, my = 0.5;
+    let px = 0.5, py = 0.5;
+    document.addEventListener('mousemove', e => {
+        mx = e.clientX / window.innerWidth;
+        my = e.clientY / window.innerHeight;
+    });
+    function animateSpheres() {
+        px += (mx - px) * 0.1;
+        py += (my - py) * 0.1;
+        const cx = (px - 0.5) * 2;
+        const cy = (py - 0.5) * 2;
+        spheres.forEach((s, i) => {
+            const depth = 0.5 + i * 0.2;
+            const tx = cx * 12 * depth;
+            const ty = cy * 8 * depth;
+            s.style.transform = `translate(${tx}px, ${ty}px)`;
+        });
+        requestAnimationFrame(animateSpheres);
+    }
+    animateSpheres();
+})();
+
+// ===== Card Mouse Tilt + Highlight =====
+(function() {
+    const cards = document.querySelectorAll('.crystal-card, .project-card');
+    if (!cards.length) return;
+
+    cards.forEach(card => {
+        let ticking = false;
+
+        card.addEventListener('mousemove', e => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    const rect = card.getBoundingClientRect();
+                    const x = (e.clientX - rect.left) / rect.width;
+                    const y = (e.clientY - rect.top) / rect.height;
+
+                    // Tilt: max ±6 degrees
+                    const tiltX = (y - 0.5) * -8;
+                    const tiltY = (x - 0.5) * 8;
+
+                    card.style.transform = `perspective(600px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(0)`;
+
+                    // Move the ::before highlight to follow mouse
+                    card.style.setProperty('--mx', `${x * 100}%`);
+                    card.style.setProperty('--my', `${y * 100}%`);
+
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = '';
+            card.style.setProperty('--mx', '50%');
+            card.style.setProperty('--my', '50%');
+        });
+    });
+})();
+</script>
+
+</body>
+</html>
