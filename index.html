@@ -602,7 +602,7 @@
     </div>
   </div>
   <div class="header-right">
-    <button class="btn-theme" id="btnTheme" onclick="toggleTheme()" title="切换主题">☀️</button>
+    <button class="btn-theme" id="btnTheme" onclick="toggleTheme()">☀️</button>
     <button class="btn-lang" id="btnLang" onclick="toggleLang()" title="Switch Language">EN</button>
     <div class="signal" id="signalBar">
       <div class="signal-bar"></div>
@@ -612,7 +612,7 @@
     </div>
     <div class="bt-status">
       <div class="bt-dot" id="btDot"></div>
-      <span class="bt-status-text" id="btStatusText">未连接</span>
+      <span class="bt-status-text" id="btStatusText"></span>
     </div>
     <button class="btn btn-connect" id="btnConnect" onclick="connectBluetooth()">连接蓝牙</button>
     <button class="btn btn-disconnect" id="btnDisconnect" onclick="disconnectBluetooth()" style="display:none">断开连接</button>
@@ -676,7 +676,7 @@
     <div class="th-body" id="thBody">
       <div class="th-grid" id="thGrid"></div>
       <div class="th-actions">
-        <button class="btn-reset" id="btnResetTh" disabled>恢复默认</button>
+        <button class="btn-reset" id="btnResetTh" onclick="resetThresholds()" disabled>恢复默认</button>
       </div>
     </div>
   </div>
@@ -873,7 +873,7 @@ function applyTheme() {
   const btn = document.getElementById('btnTheme');
   if (btn) {
     btn.textContent = currentTheme === 'dark' ? '🌙' : '☀️';
-    btn.title = currentTheme === 'dark' ? '深色模式' : '浅色模式';
+    btn.title = currentTheme === 'dark' ? t('themeDark') : t('themeLight');
   }
 }
 
@@ -914,6 +914,11 @@ const I18N = {
     btnRefresh: '手动刷新',
     sectionQuick: '快捷指令',
     cmdReadTh: '0x06 读阈值',
+    cmd01: '0x01 LED开',
+    cmd02: '0x02 LED关',
+    cmd03: '0x03 泵开',
+    cmd04: '0x04 泵关',
+    cmd05: '0x05 读传感器',
     sectionLog: '通信日志',
     btnClear: '清空',
     autoScroll: '自动滚动',
@@ -940,6 +945,9 @@ const I18N = {
     overlayStep2: '使用 Chrome 或 Edge 浏览器（需支持 Web Bluetooth）',
     overlayStep3: '点击下方按钮，在弹出列表中选择 BT24 设备',
     overlayBtn: '🔗 开始连接蓝牙',
+    // Theme
+    themeLight: '浅色模式',
+    themeDark: '深色模式',
     // Toast
     toastConnectOk: '蓝牙连接成功！',
     toastDisconnected: '蓝牙已断开连接',
@@ -952,10 +960,12 @@ const I18N = {
     toastPumpAutoOn: '土壤干旱，已自动开启水泵',
     toastPumpAutoOff: '土壤湿度充足，已自动停止水泵',
     toastConnectFirst: '请先连接蓝牙',
+    toastConnectFail: '连接失败：',
     toastSendFail: '发送失败：',
     toastBrowserErr: '当前浏览器不支持 Web Bluetooth API，请使用 Chrome 或 Edge',
     toastUseChrome: '请使用 Chrome 或 Edge 浏览器',
     toastWarn: '⚠ ',
+    toastResetThreshold: '已发送恢复默认阈值指令',
     // Log
     logReady: '具身工场智慧农场控制面板已就绪，等待蓝牙连接...',
     logBrowser: '浏览器：',
@@ -1020,6 +1030,11 @@ const I18N = {
     btnRefresh: 'Refresh',
     sectionQuick: 'Quick Commands',
     cmdReadTh: '0x06 Read Thld',
+    cmd01: '0x01 LED ON',
+    cmd02: '0x02 LED OFF',
+    cmd03: '0x03 Pump ON',
+    cmd04: '0x04 Pump OFF',
+    cmd05: '0x05 Read Sensors',
     sectionLog: 'Communication Log',
     btnClear: 'Clear',
     autoScroll: 'Auto-scroll',
@@ -1043,6 +1058,9 @@ const I18N = {
     overlayStep2: 'Use Chrome or Edge browser (Web Bluetooth API required)',
     overlayStep3: 'Click the button below and select BT24 from the device list',
     overlayBtn: '🔗 Connect via Bluetooth',
+    // Theme
+    themeLight: 'Light Mode',
+    themeDark: 'Dark Mode',
     toastConnectOk: 'BLE connected!',
     toastDisconnected: 'BLE disconnected',
     toastLedOn: 'LED turned ON',
@@ -1054,10 +1072,12 @@ const I18N = {
     toastPumpAutoOn: 'Soil dry, pump auto-start',
     toastPumpAutoOff: 'Soil moisture OK, pump auto-stop',
     toastConnectFirst: 'Please connect BLE first',
+    toastConnectFail: 'Connection failed: ',
     toastSendFail: 'Send failed: ',
     toastBrowserErr: 'Web Bluetooth API not supported. Please use Chrome or Edge.',
     toastUseChrome: 'Please use Chrome or Edge browser',
     toastWarn: '⚠ ',
+    toastResetThreshold: 'Reset thresholds command sent',
     logReady: 'Embodied-ai-factory Smart Farm Dashboard ready, waiting for BLE connection...',
     logBrowser: 'Browser: ',
     logSearching: 'Searching for BT24 BLE device...',
@@ -1101,13 +1121,16 @@ function toggleLang() {
   currentLang = currentLang === 'zh' ? 'en' : 'zh';
   localStorage.setItem('smartFarmLang', currentLang);
   document.getElementById('btnLang').textContent = currentLang === 'zh' ? 'EN' : '中';
+  document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
   applyLanguage();
 }
 
 function applyLanguage() {
   const L = I18N[currentLang];
+  document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
   // Header
   document.querySelector('.header-title').textContent = L.title;
+  document.title = L.title;
   document.querySelector('.header-sub').textContent = L.subtitle;
   document.getElementById('btnConnect').textContent = L.btnConnect;
   document.getElementById('btnDisconnect').textContent = L.btnDisconnect;
@@ -1122,7 +1145,7 @@ function applyLanguage() {
   // Status placeholders
   ['stat-temp','stat-humi','stat-soil','stat-light','stat-rain'].forEach(id => {
     const el = document.getElementById(id);
-    if (el && el.textContent === I18N.zh.waitingData || el.textContent === I18N.en.waitingData) {
+    if (el && (el.textContent === I18N.zh.waitingData || el.textContent === I18N.en.waitingData)) {
       el.textContent = L.waitingData;
     }
   });
@@ -1132,8 +1155,9 @@ function applyLanguage() {
     // Keep the dot, replace text
     titleEl.childNodes.forEach(n => { if (n.nodeType === 3) n.textContent = ' ' + L.sectionControl; });
   })();
-  document.querySelector('.control-card .device-row:first-child .device-name').textContent = L.labelLED;
-  document.querySelector('.control-card .device-row:last-child .device-name').textContent = L.labelPump;
+  const deviceRows = document.querySelectorAll('.control-card > .device-row');
+  deviceRows[0].querySelector('.device-name').textContent = L.labelLED;
+  deviceRows[1].querySelector('.device-name').textContent = L.labelPump;
   // LED/Pump labels
   document.getElementById('led-label').textContent = ledState ? L.stateOn : L.stateOff;
   document.getElementById('pump-label').textContent = pumpState ? L.stateOn : L.stateOff;
@@ -1178,14 +1202,23 @@ function applyLanguage() {
   if (lu.textContent.startsWith(I18N.zh.lastUpdateNone) || lu.textContent.startsWith(I18N.en.lastUpdateNone)) {
     lu.textContent = L.lastUpdateNone;
   } else if (lu.textContent.startsWith(I18N.zh.lastUpdate) || lu.textContent.startsWith(I18N.en.lastUpdate)) {
-    const time = lu.textContent.split('：').pop() || lu.textContent.split(': ').pop();
+    const parts = lu.textContent.split('：');
+    const time = parts.length > 1 ? parts.pop() : lu.textContent.split(': ').pop();
     lu.textContent = L.lastUpdate + (time || '');
   }
   // BT status
   if (isConnected) {
     document.getElementById('btStatusText').textContent = btDevice ? btDevice.name : L.connected;
+  } else {
+    document.getElementById('btStatusText').textContent = L.disconnected;
   }
+  // Theme tooltip
+  applyTheme();
   // CMD button names (update via cmdName)
+  ['cmd01','cmd02','cmd03','cmd04','cmd05'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.textContent = L[id] || btn.textContent;
+  });
   // 阈值面板标题刷新
   document.getElementById('thTitle').textContent = L.sectionThreshold;
   document.getElementById('thCount').textContent = thresholdsLoaded ? L.thresholdLoaded : L.thresholdUnread;
@@ -1237,6 +1270,13 @@ async function connectBluetooth() {
       optionalServices: [BLE_SERVICE_UUID]
     });
 
+    // 移除旧监听器，防止重连导致多次触发
+    if (btDevice) {
+      try { btDevice.removeEventListener('gattserverdisconnected', onDisconnected); } catch(e) {}
+    }
+    if (btChar) {
+      try { btChar.removeEventListener('characteristicvaluechanged', onDataReceived); } catch(e) {}
+    }
     btDevice.addEventListener('gattserverdisconnected', onDisconnected);
     log('sys', t('logFound') + btDevice.name);
 
@@ -1253,7 +1293,7 @@ async function connectBluetooth() {
     setBtStatus('disconnected');
     if (err.name !== 'NotFoundError') {
       log('err', t('logConnectFail') + err.message);
-      toast(t('toastSendFail') + err.message, 'error');
+      toast(t('toastConnectFail') + err.message, 'error');
     } else {
       log('sys', t('logUserCancel'));
     }
@@ -1572,15 +1612,17 @@ function lightStatus(v) {
 // 发送指令（带队列，避免 GATT already in progress）
 // =============================================
 function sendHex(hexStr) {
-  if (!btChar || !isConnected) { toast('请先连接蓝牙', 'error'); return; }
+  if (!btChar || !isConnected) { toast(t('toastConnectFirst'), 'error'); return Promise.resolve(); }
   const clean = hexStr.replace(/^0x/i, '').replace(/\s/g, '');
-  if (!clean) return;
+  if (!clean) return Promise.resolve();
 
   // 去重：如果队列里已经有同一指令，跳过（避免自动轮询重复堆积 05）
-  if (sendQueue.includes(clean)) return;
+  if (sendQueue.some(item => item.hex === clean)) return Promise.resolve();
 
-  sendQueue.push(clean);
-  processSendQueue();
+  return new Promise(resolve => {
+    sendQueue.push({ hex: clean, resolve });
+    processSendQueue();
+  });
 }
 
 async function processSendQueue() {
@@ -1588,7 +1630,7 @@ async function processSendQueue() {
   isSending = true;
 
   while (sendQueue.length > 0) {
-    const hex = sendQueue.shift();
+    const { hex, resolve } = sendQueue.shift();
     try {
       const bytes = new Uint8Array(
         hex.match(/.{1,2}/g).map(b => parseInt(b, 16))
@@ -1602,6 +1644,7 @@ async function processSendQueue() {
         toast(t('toastSendFail') + err.message, 'error');
       }
     }
+    resolve();  // 通知调用方单条指令已完成
   }
 
   isSending = false;
@@ -1703,12 +1746,16 @@ function parseThresholdData(data) {
   }
   if (loaded && !thresholdsLoaded) {
     thresholdsLoaded = true;
-    enableThresholdControls(true);
     document.getElementById('thCount').textContent = t('thresholdLoaded');
     document.getElementById('thCount').classList.add('loaded');
     document.getElementById('btnResetTh').disabled = false;
     document.getElementById('thresholdPanel').style.display = '';
     log('sys', t('logThresholdsOk'));
+  }
+  // 不管首次还是后续，只要有数据就启用按钮（重建 DOM 后必须重新启用）
+  if (loaded) {
+    enableThresholdControls(true);
+    document.getElementById('btnResetTh').disabled = false;
   }
 }
 
@@ -1756,7 +1803,7 @@ async function resetThresholds() {
   }
   // 重新读取确认
   setTimeout(() => readThresholds(), 600);
-  toast('已发送恢复默认阈值指令', 'info');
+  toast(t('toastResetThreshold'), 'info');
 }
 
 // 启用/禁用阈值按钮
@@ -1958,8 +2005,9 @@ function enableControls(en) {
 
 function updateLastTime() {
   const now = new Date();
+  const locale = currentLang === 'zh' ? 'zh-CN' : 'en-US';
   document.getElementById('lastUpdate').textContent =
-    t('lastUpdate') + now.toLocaleTimeString('zh-CN');
+    t('lastUpdate') + now.toLocaleTimeString(locale);
 }
 
 // =============================================
@@ -1967,7 +2015,7 @@ function updateLastTime() {
 // =============================================
 function log(type, msg) {
   const body = document.getElementById('logBody');
-  const now  = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  const now  = new Date().toLocaleTimeString(currentLang === 'zh' ? 'zh-CN' : 'en-US', { hour12: false });
   const line = document.createElement('div');
   line.className = 'log-line';
   const prefix = { tx:'→ TX', rx:'← RX', sys:'• SYS', err:'✗ ERR' }[type] || '·';
